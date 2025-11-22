@@ -1,0 +1,1721 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Личный нутри-кабинет</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --card: #020617;
+      --card-soft: #020617;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56,189,248,0.16);
+      --border: #1f2937;
+      --danger: #f97373;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.65);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background: radial-gradient(circle at top, #0b1120 0, #020617 45%, #020617 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      color: var(--text);
+    }
+    .app {
+      width: 100%;
+      max-width: 1140px;
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.06), transparent 55%),
+                  radial-gradient(circle at top right, rgba(37,99,235,0.12), transparent 60%),
+                  var(--bg-elevated);
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.4);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title span.icon {
+      font-size: 20px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.8);
+      padding: 3px 9px;
+      font-size: 11px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pill-value {
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg,#38bdf8,#6366f1);
+      color: #f9fafb;
+      box-shadow: 0 14px 30px rgba(37,99,235,0.7);
+    }
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: var(--muted);
+      border: 1px solid rgba(148,163,184,0.6);
+    }
+    .btn-soft {
+      background: rgba(15,23,42,0.65);
+      color: var(--muted);
+      border: 1px solid rgba(55,65,81,0.9);
+    }
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .toggle-dark {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .toggle-pill {
+      width: 34px;
+      height: 18px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.6);
+      position: relative;
+    }
+    .toggle-pill div {
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      background: #fbbf24;
+      transition: transform 0.18s ease;
+    }
+    .toggle-pill.on {
+      background: #38bdf8;
+      border-color: #38bdf8;
+    }
+    .toggle-pill.on div {
+      transform: translateX(14px);
+      background: #0f172a;
+    }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+      border-bottom: 1px solid rgba(31,41,55,0.9);
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56,189,248,0.5);
+    }
+    .tab-icon {
+      font-size: 13px;
+    }
+    .tab-content {
+      margin-top: 8px;
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .section {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 10px 12px 12px;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), #020617);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-title span.icon {
+      font-size: 14px;
+    }
+    .section-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    input[type="number"],
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      padding: 5px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(31,41,55,0.9);
+      font-size: 12px;
+      background: rgba(15,23,42,0.95);
+      color: var(--text);
+      min-width: 70px;
+    }
+    input[type="number"] { width: 80px; }
+    input[type="date"] { width: 130px; }
+    textarea { min-height: 60px; resize: vertical; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(30,64,175,0.7);
+      background: rgba(15,23,42,0.9);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .pill b {
+      color: var(--accent);
+      font-size: 12px;
+    }
+    .error {
+      font-size: 11px;
+      color: var(--danger);
+      min-height: 14px;
+    }
+    .table-wrap {
+      margin-top: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.9);
+      overflow: auto;
+      max-height: 280px;
+      background: rgba(15,23,42,0.96);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    thead {
+      background: rgba(15,23,42,0.95);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th, td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(31,41,55,0.9);
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    tbody tr:nth-child(even) td {
+      background: rgba(15,23,42,0.9);
+    }
+    tbody tr:nth-child(odd) td {
+      background: rgba(15,23,42,0.85);
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      color: var(--muted);
+    }
+    .badge-positive { border-color: #22c55e; color: #4ade80; }
+    .badge-negative { border-color: #f97373; color: #fecaca; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .stat-card {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.9);
+      padding: 6px 8px;
+      background: rgba(15,23,42,0.95);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .stat-note {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .chart-box {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.9);
+      padding: 8px 10px 10px;
+      background: rgba(15,23,42,0.95);
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    canvas {
+      width: 100%;
+      height: 210px;
+    }
+    .small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .ai-box {
+      margin-top: 6px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(56,189,248,0.6);
+      padding: 6px 8px;
+      background: rgba(8,47,73,0.8);
+      font-size: 12px;
+    }
+    .ai-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-title span.icon {
+      font-size: 13px;
+    }
+    .ai-text {
+      font-size: 11.5px;
+      color: #e5e7eb;
+      line-height: 1.5;
+    }
+    @media (max-width: 640px) {
+      .app { padding: 14px 10px 14px; border-radius: 18px; }
+      .header { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="title">
+        <span class="icon">🥗</span>
+        Личный нутри-кабинет
+      </div>
+      <div class="subtitle">
+        Локальный трекер еды, веса и калорий: расчёт TDEE, цель −0.5 кг/неделю, учёт воды, простая аналитика и графики.
+      </div>
+      <div class="chip-row">
+        <div class="chip">Формула: <span class="pill-value">Mifflin–St Jeor (мужчина)</span></div>
+        <div class="chip">Цель: <span class="pill-value">−0.5 кг / неделю</span></div>
+        <div class="chip">Хранение: <span class="pill-value">только в браузере</span></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+      <button class="btn btn-soft" id="btnExportHtml" type="button">📄 Экспорт отчёта (HTML)</button>
+      <label class="toggle-dark">
+        <span>Тёмная тема</span>
+        <div class="toggle-pill on" id="darkToggle"><div></div></div>
+      </label>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-profile"><span class="tab-icon">👤</span>Профиль</button>
+    <button class="tab-btn" data-tab="tab-day"><span class="tab-icon">📅</span>День</button>
+    <button class="tab-btn" data-tab="tab-analytics"><span class="tab-icon">📊</span>Аналитика</button>
+    <button class="tab-btn" data-tab="tab-import"><span class="tab-icon">📥</span>Шаги & Здоровье</button>
+    <button class="tab-btn" data-tab="tab-settings"><span class="tab-icon">⚙️</span>Настройки / Экспорт</button>
+  </div>
+
+  <!-- Профиль -->
+  <div class="tab-content active" id="tab-profile">
+    <div class="section">
+      <div class="section-title"><span class="icon">👤</span>Профиль и цель</div>
+      <div class="section-sub">
+        Формула Mifflin–St Jeor для мужчины. Цель: −0.5 кг/неделю (≈ −500 ккал/день от TDEE). Данные сохраняются автоматически.
+      </div>
+      <div class="row">
+        <label>Возраст, лет
+          <input type="number" id="ageInput" min="10" max="100" value="35">
+        </label>
+        <label>Рост, см
+          <input type="number" id="heightInput" min="130" max="230" value="180">
+        </label>
+        <label>Вес, кг
+          <input type="number" id="weightInput" step="0.1" min="30" max="250" value="75">
+        </label>
+        <label>Активность
+          <select id="activityInput">
+            <option value="1.2">Низкая (мало движ.)</option>
+            <option value="1.375">Лёгкая (1–3 трен./нед.)</option>
+            <option value="1.55" selected>Средняя (3–5 трен./нед.)</option>
+            <option value="1.725">Высокая (6–7 трен./нед.)</option>
+          </select>
+        </label>
+        <button class="btn btn-primary" id="btnSaveProfile" type="button">Сохранить профиль</button>
+      </div>
+      <div class="row">
+        <div class="pill">BMR: <b id="bmrValue">—</b> ккал/день</div>
+        <div class="pill">TDEE (поддержание): <b id="tdeeValue">—</b> ккал/день</div>
+        <div class="pill">Цель (−0.5 кг/нед): <b id="targetCalValue">—</b> ккал/день</div>
+      </div>
+      <div class="stats-grid" style="margin-top:8px;">
+        <div class="stat-card">
+          <div class="stat-label">Реком. белок</div>
+          <div class="stat-value" id="statProteinTarget">—</div>
+          <div class="stat-note">1.6–2.2 г/кг веса</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Реком. жиры</div>
+          <div class="stat-value" id="statFatTarget">—</div>
+          <div class="stat-note">0.8–1 г/кг веса</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Реком. углеводы</div>
+          <div class="stat-value" id="statCarbTarget">—</div>
+          <div class="stat-note">остаток калорий после Б/Ж</div>
+        </div>
+      </div>
+      <div class="error" id="profileError"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">🧠</span>Нутри-анализ цели</div>
+      <div class="section-sub">Простой “умный” анализ основывается на калорийном балансе, БЖУ и динамике веса.</div>
+      <div class="ai-box" id="aiProfileBox">
+        <div class="ai-title"><span class="icon">✨</span>Резюме по профилю</div>
+        <div class="ai-text" id="aiProfileText">
+          Заполни профиль и цель, чтобы увидеть рекомендации по калорийности и БЖУ.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- День -->
+  <div class="tab-content" id="tab-day">
+    <div class="section">
+      <div class="section-title"><span class="icon">📅</span>День: еда, вес, вода</div>
+      <div class="section-sub">Выбери дату, внеси еду, вес и воду. Эти данные будут учтены в графиках и аналитике.</div>
+      <div class="row">
+        <label>Дата
+          <input type="date" id="dayDateInput">
+        </label>
+        <button class="btn btn-soft" id="btnToday" type="button">Сегодня</button>
+        <span class="small">Совет: записывай еду сразу после приёма — так легче не забыть.</span>
+      </div>
+      <div class="row">
+        <label>Вес в этот день, кг
+          <input type="number" id="dayWeightInput" step="0.1" min="30" max="250">
+        </label>
+        <button class="btn btn-secondary" id="btnSaveDayWeight" type="button">Сохранить вес</button>
+        <label>Вода, л
+          <input type="number" id="waterInput" step="0.1" min="0" value="0">
+        </label>
+        <button class="btn btn-secondary" id="btnSaveWater" type="button">Сохранить воду</button>
+      </div>
+      <div class="row">
+        <span class="small">Цель по воде по умолчанию: 2.5 л/день (настраивается во вкладке Настройки).</span>
+      </div>
+      <div class="error" id="dayError"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">🍽</span>Еда за день</div>
+      <div class="section-sub">Выбери продукт из базы или добавь свой. БЖУ и калории автоматически суммируются по дню.</div>
+      <div class="row">
+        <label>Продукт из базы
+          <select id="foodSelect">
+            <option value="">— выбрать —</option>
+          </select>
+        </label>
+        <button class="btn btn-soft" id="btnToggleFoodDb" type="button">📚 Показать базу продуктов</button>
+      </div>
+      <div class="row">
+        <label>Или своё название
+          <input type="text" id="foodNameInput" placeholder="например, гречка отварная">
+        </label>
+        <label>Граммы
+          <input type="number" id="foodGramInput" min="1" value="100">
+        </label>
+        <label>Ккал / 100 г
+          <input type="number" id="foodKcal100Input" min="0" value="0">
+        </label>
+        <label>Б / Ж / У (на 100 г)
+          <div style="display:flex;gap:4px;">
+            <input type="number" id="foodProt100Input" min="0" value="0" style="width:60px;" placeholder="Б">
+            <input type="number" id="foodFat100Input" min="0" value="0" style="width:60px;" placeholder="Ж">
+            <input type="number" id="foodCarb100Input" min="0" value="0" style="width:60px;" placeholder="У">
+          </div>
+        </label>
+      </div>
+      <div class="row">
+        <label>Калорий итого (расчёт/ручной)
+          <input type="number" id="foodKcalTotalInput" min="0" value="0">
+        </label>
+        <button class="btn btn-secondary" id="btnRecalcFoodKcal" type="button">↻ Пересчитать по 100 г</button>
+        <button class="btn btn-primary" id="btnAddFood" type="button">Добавить в дневник</button>
+      </div>
+      <div class="row">
+        <span class="small" id="foodHint">Подсказка: выбери продукт из базы — БЖУ и ккал подставятся автоматически.</span>
+      </div>
+      <div class="table-wrap" style="margin-top:6px;">
+        <table>
+          <thead>
+          <tr>
+            <th>Продукт</th>
+            <th>г</th>
+            <th>Ккал</th>
+            <th>Б</th>
+            <th>Ж</th>
+            <th>У</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody id="foodTableBody">
+          <tr><td colspan="7">Пока нет добавленных продуктов за выбранный день.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stats-grid" style="margin-top:8px;">
+        <div class="stat-card">
+          <div class="stat-label">Калорий за день</div>
+          <div class="stat-value" id="dayCalStat">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Белок (г)</div>
+          <div class="stat-value" id="dayProtStat">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Жиры (г)</div>
+          <div class="stat-value" id="dayFatStat">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Углеводы (г)</div>
+          <div class="stat-value" id="dayCarbStat">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section" id="foodDbSection" style="display:none;">
+      <div class="section-title"><span class="icon">📚</span>Мини-база продуктов</div>
+      <div class="section-sub">Пример структуры большой базы. Сейчас встроены только несколько популярных продуктов (капучино, том ям и т.д.), но список можно расширить в коде.</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Название</th>
+            <th>Ккал / 100г</th>
+            <th>Б</th>
+            <th>Ж</th>
+            <th>У</th>
+            <th>Тип</th>
+          </tr>
+          </thead>
+          <tbody id="foodDbBody"></tbody>
+        </table>
+      </div>
+      <div class="small" style="margin-top:4px;">Эту базу можно расширить, добавив свои продукты в блоке настроек или отредактировав JSON в коде файла.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">🔔</span>Локальные напоминания</div>
+      <div class="section-sub">Можно запланировать простые напоминания внутри страницы (обед, вода, взвешивание). Работают, пока страница открыта.</div>
+      <div class="row">
+        <label>Сообщение
+          <input type="text" id="reminderMsgInput" placeholder="Например, записать ужин">
+        </label>
+        <label>Через (минут)
+          <input type="number" id="reminderMinutesInput" min="1" value="30">
+        </label>
+        <button class="btn btn-secondary" id="btnSetReminder" type="button">Создать напоминание</button>
+      </div>
+      <div class="small" id="reminderStatus">Напоминания появятся сверху как всплывающее сообщение.</div>
+    </div>
+  </div>
+
+  <!-- Аналитика -->
+  <div class="tab-content" id="tab-analytics">
+    <div class="section">
+      <div class="section-title"><span class="icon">📊</span>Графики</div>
+      <div class="section-sub">Калории vs цель, динамика веса, накопленный дефицит/профицит и вода.</div>
+      <div class="charts-grid">
+        <div class="chart-box">
+          <div class="chart-title">Калории vs цель</div>
+          <canvas id="chartCalories"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Вес по дням</div>
+          <canvas id="chartWeight"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Накопленный дефицит / жир (кг)</div>
+          <canvas id="chartFat"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Вода по дням</div>
+          <canvas id="chartWater"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">🧬</span>Корреляции</div>
+      <div class="section-sub">Простая оценка связи между дефицитом/профицитом и изменением веса.</div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Корреляция: дефицит ↔ Δвеса</div>
+          <div class="stat-value" id="corrDeficitWeight">—</div>
+          <div class="stat-note">Чем ближе к −1, тем сильнее: больше дефицит → сильнее падает вес.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Средний дефицит</div>
+          <div class="stat-value" id="avgDeficit">—</div>
+          <div class="stat-note">Ожидаемая скорость изменения веса.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Фактическое изменение веса</div>
+          <div class="stat-value" id="weightDelta">—</div>
+          <div class="stat-note">От первой записи до последней.</div>
+        </div>
+      </div>
+
+      <div class="section-sub" style="margin-top:6px;">Аналитика “ИИ-советника” по фактическим данным:</div>
+      <div class="ai-box" id="aiAnalyticsBox">
+        <div class="ai-title"><span class="icon">🤖</span>Аналитика по прогрессу</div>
+        <div class="ai-text" id="aiAnalyticsText">
+          Когда будет накоплено несколько дней с весом и калориями, здесь появится интерпретация: насколько реальный прогресс совпадает с целевым (−0.5 кг/нед).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Импорт шагов / здоровья -->
+  <div class="tab-content" id="tab-import">
+    <div class="section">
+      <div class="section-title"><span class="icon">📥</span>Импорт из Apple Здоровье (экспорт XML)</div>
+      <div class="section-sub">
+        Можно загрузить <code>export.xml</code> из Apple Здоровье. Приложение попробует извлечь шаги и активную энергию по дням, чтобы сопоставить с калориями.
+      </div>
+      <div class="row">
+        <label>Файл export.xml
+          <input type="file" id="healthFileInput" accept=".xml">
+        </label>
+        <button class="btn btn-secondary" id="btnParseHealth" type="button">Разобрать файл</button>
+      </div>
+      <div class="table-wrap" style="margin-top:6px;max-height:220px;">
+        <table>
+          <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Шаги</th>
+            <th>Активная энергия, ккал</th>
+          </tr>
+          </thead>
+          <tbody id="healthTableBody">
+          <tr><td colspan="3">Пока нет импортированных данных.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="small" style="margin-top:4px;">Это расширение для анализа активности. Для ежедневного ведения достаточно вкладок Профиль, День и Аналитика.</div>
+    </div>
+  </div>
+
+  <!-- Настройки / экспорт -->
+  <div class="tab-content" id="tab-settings">
+    <div class="section">
+      <div class="section-title"><span class="icon">⚙️</span>Настройки</div>
+      <div class="section-sub">Глобальные параметры и база продуктов.</div>
+      <div class="row">
+        <label>Цель по воде, л/день
+          <input type="number" id="waterGoalInput" step="0.1" min="0.5" value="2.5">
+        </label>
+        <button class="btn btn-secondary" id="btnSaveWaterGoal" type="button">Сохранить</button>
+      </div>
+
+      <div class="section-sub" style="margin-top:6px;">Добавление своих продуктов в базу:</div>
+      <div class="row">
+        <label>Название
+          <input type="text" id="customProdNameInput" placeholder="Например, сыр Гауда">
+        </label>
+        <label>Ккал / 100 г
+          <input type="number" id="customProdKcalInput" min="0">
+        </label>
+        <label>Б / Ж / У / 100 г
+          <div style="display:flex;gap:4px;">
+            <input type="number" id="customProdProtInput" min="0" style="width:60px;">
+            <input type="number" id="customProdFatInput" min="0" style="width:60px;">
+            <input type="number" id="customProdCarbInput" min="0" style="width:60px;">
+          </div>
+        </label>
+        <label>Категория
+          <input type="text" id="customProdCatInput" placeholder="например, сыр">
+        </label>
+      </div>
+      <div class="row">
+        <button class="btn btn-secondary" id="btnAddCustomProduct" type="button">Добавить продукт в базу</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">📤</span>Экспорт данных</div>
+      <div class="section-sub">Можно выгрузить сырые данные для анализа в Excel / Python / Power BI.</div>
+      <div class="row">
+        <button class="btn btn-secondary" id="btnExportCsvAll" type="button">⬇ Экспортировать журнал (CSV)</button>
+        <span class="small">Включает: дату, калории, БЖУ, вес, воду, дефицит, накопленный жир.</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">📷</span>Фото продуктов (заметка)</div>
+      <div class="section-sub">Для удобства можно прикреплять фото продукта или этикетки. Это просто заметка, распознавание текста не выполняется.</div>
+      <div class="row">
+        <label>Фото продукта
+          <input type="file" id="photoInput" accept="image/*" capture="environment">
+        </label>
+        <span class="small">Файл не отправляется в интернет, можно использовать для напоминания состава/этикетки.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const STORAGE_KEY = 'nutri_cabinet_v1';
+
+  // База продуктов (можно расширить)
+  let foodDb = [
+    { id: 'cappuccino', name: 'Капучино', kcal100: 60, protein100: 3.0, fat100: 2.5, carb100: 6.5, category: 'напиток' },
+    { id: 'poke_chicken', name: 'Поке с курицей', kcal100: 140, protein100: 10, fat100: 4, carb100: 15, category: 'основное' },
+    { id: 'roll_phila', name: 'Ролл Филадельфия', kcal100: 180, protein100: 8, fat100: 7, carb100: 22, category: 'ролл' },
+    { id: 'tom_yum', name: 'Суп Том Ям', kcal100: 75, protein100: 6, fat100: 4, carb100: 4, category: 'суп' },
+    { id: 'cheese_pie', name: 'Пирог сырный', kcal100: 320, protein100: 8, fat100: 20, carb100: 24, category: 'десерт' }
+  ];
+
+  let state = {
+    profile: {
+      age: 35,
+      height: 180,
+      weight: 75,
+      activity: 1.55,
+      bmr: null,
+      tdee: null,
+      targetCal: null,
+      proteinTarget: null,
+      fatTarget: null,
+      carbTarget: null
+    },
+    waterGoal: 2.5,
+    days: {}, // date -> {weight, water, foods:[{...}]}
+    health: [], // [{date, steps, activeEnergy}]
+  };
+
+  let chartCalories = null;
+  let chartWeight = null;
+  let chartFat = null;
+  let chartWater = null;
+
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const id = btn.getAttribute('data-tab');
+      tabContents.forEach(c => c.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    });
+  });
+
+  const darkToggle = document.getElementById('darkToggle');
+  darkToggle.addEventListener('click', () => {
+    darkToggle.classList.toggle('on');
+  });
+
+  const ageInput = document.getElementById('ageInput');
+  const heightInput = document.getElementById('heightInput');
+  const weightInput = document.getElementById('weightInput');
+  const activityInput = document.getElementById('activityInput');
+  const bmrValueEl = document.getElementById('bmrValue');
+  const tdeeValueEl = document.getElementById('tdeeValue');
+  const targetCalValueEl = document.getElementById('targetCalValue');
+  const profileErrorEl = document.getElementById('profileError');
+  const statProteinTargetEl = document.getElementById('statProteinTarget');
+  const statFatTargetEl = document.getElementById('statFatTarget');
+  const statCarbTargetEl = document.getElementById('statCarbTarget');
+  const aiProfileText = document.getElementById('aiProfileText');
+
+  const dayDateInput = document.getElementById('dayDateInput');
+  const btnToday = document.getElementById('btnToday');
+  const dayWeightInput = document.getElementById('dayWeightInput');
+  const waterInput = document.getElementById('waterInput');
+  const dayErrorEl = document.getElementById('dayError');
+  const foodSelectEl = document.getElementById('foodSelect');
+  const foodDbSection = document.getElementById('foodDbSection');
+  const btnToggleFoodDb = document.getElementById('btnToggleFoodDb');
+  const foodDbBody = document.getElementById('foodDbBody');
+
+  const foodNameInput = document.getElementById('foodNameInput');
+  const foodGramInput = document.getElementById('foodGramInput');
+  const foodKcal100Input = document.getElementById('foodKcal100Input');
+  const foodProt100Input = document.getElementById('foodProt100Input');
+  const foodFat100Input = document.getElementById('foodFat100Input');
+  const foodCarb100Input = document.getElementById('foodCarb100Input');
+  const foodKcalTotalInput = document.getElementById('foodKcalTotalInput');
+  const foodHint = document.getElementById('foodHint');
+  const foodTableBody = document.getElementById('foodTableBody');
+
+  const dayCalStat = document.getElementById('dayCalStat');
+  const dayProtStat = document.getElementById('dayProtStat');
+  const dayFatStat = document.getElementById('dayFatStat');
+  const dayCarbStat = document.getElementById('dayCarbStat');
+
+  const btnSaveProfile = document.getElementById('btnSaveProfile');
+  const btnSaveDayWeight = document.getElementById('btnSaveDayWeight');
+  const btnSaveWater = document.getElementById('btnSaveWater');
+  const btnAddFood = document.getElementById('btnAddFood');
+  const btnRecalcFoodKcal = document.getElementById('btnRecalcFoodKcal');
+
+  const reminderMsgInput = document.getElementById('reminderMsgInput');
+  const reminderMinutesInput = document.getElementById('reminderMinutesInput');
+  const btnSetReminder = document.getElementById('btnSetReminder');
+  const reminderStatus = document.getElementById('reminderStatus');
+
+  const chartCaloriesEl = document.getElementById('chartCalories');
+  const chartWeightEl = document.getElementById('chartWeight');
+  const chartFatEl = document.getElementById('chartFat');
+  const chartWaterEl = document.getElementById('chartWater');
+
+  const corrDeficitWeightEl = document.getElementById('corrDeficitWeight');
+  const avgDeficitEl = document.getElementById('avgDeficit');
+  const weightDeltaEl = document.getElementById('weightDelta');
+  const aiAnalyticsText = document.getElementById('aiAnalyticsText');
+
+  const healthFileInput = document.getElementById('healthFileInput');
+  const btnParseHealth = document.getElementById('btnParseHealth');
+  const healthTableBody = document.getElementById('healthTableBody');
+
+  const waterGoalInput = document.getElementById('waterGoalInput');
+  const btnSaveWaterGoal = document.getElementById('btnSaveWaterGoal');
+  const customProdNameInput = document.getElementById('customProdNameInput');
+  const customProdKcalInput = document.getElementById('customProdKcalInput');
+  const customProdProtInput = document.getElementById('customProdProtInput');
+  const customProdFatInput = document.getElementById('customProdFatInput');
+  const customProdCarbInput = document.getElementById('customProdCarbInput');
+  const customProdCatInput = document.getElementById('customProdCatInput');
+  const btnAddCustomProduct = document.getElementById('btnAddCustomProduct');
+
+  const btnExportCsvAll = document.getElementById('btnExportCsvAll');
+  const btnExportHtml = document.getElementById('btnExportHtml');
+
+  const photoInput = document.getElementById('photoInput');
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data) return;
+      if (data.profile) state.profile = data.profile;
+      if (typeof data.waterGoal === 'number') state.waterGoal = data.waterGoal;
+      if (data.days) state.days = data.days;
+      if (data.health) state.health = data.health;
+      if (Array.isArray(data.foodDb)) foodDb = data.foodDb;
+    } catch (e) {
+      console.error('loadState error', e);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        profile: state.profile,
+        waterGoal: state.waterGoal,
+        days: state.days,
+        health: state.health,
+        foodDb
+      }));
+    } catch (e) {
+      console.error('saveState error', e);
+    }
+  }
+
+  function setToday() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2,'0');
+    const day = String(d.getDate()).padStart(2,'0');
+    dayDateInput.value = `${y}-${m}-${day}`;
+  }
+
+  function calcBmrMifflinMale(weight, height, age) {
+    return 10 * weight + 6.25 * height - 5 * age + 5;
+  }
+
+  function recalcProfile() {
+    const age = parseInt(ageInput.value, 10);
+    const height = parseFloat(heightInput.value);
+    const weight = parseFloat(weightInput.value);
+    const activity = parseFloat(activityInput.value);
+    if (isNaN(age) || isNaN(height) || isNaN(weight) || isNaN(activity)) {
+      profileErrorEl.textContent = 'Заполни возраст, рост, вес и активность.';
+      return;
+    }
+    profileErrorEl.textContent = '';
+    const bmr = calcBmrMifflinMale(weight, height, age);
+    const tdee = bmr * activity;
+    const targetCal = tdee - 500; // −0.5 кг/нед
+
+    const proteinMin = 1.6 * weight;
+    const proteinMax = 2.2 * weight;
+    const fatMin = 0.8 * weight;
+    const fatMax = 1.0 * weight;
+    const avgProtein = (proteinMin + proteinMax) / 2;
+    const avgFat = (fatMin + fatMax) / 2;
+    const kcalFromProtein = avgProtein * 4;
+    const kcalFromFat = avgFat * 9;
+    const carbsKcal = Math.max(targetCal - kcalFromProtein - kcalFromFat, 0);
+    const carbsGram = carbsKcal / 4;
+
+    state.profile = {
+      age, height, weight, activity,
+      bmr, tdee, targetCal,
+      proteinTarget: avgProtein,
+      fatTarget: avgFat,
+      carbTarget: carbsGram
+    };
+    bmrValueEl.textContent = bmr.toFixed(0);
+    tdeeValueEl.textContent = tdee.toFixed(0);
+    targetCalValueEl.textContent = targetCal.toFixed(0);
+    statProteinTargetEl.textContent = `${proteinMin.toFixed(0)}–${proteinMax.toFixed(0)} г`;
+    statFatTargetEl.textContent = `${fatMin.toFixed(0)}–${fatMax.toFixed(0)} г`;
+    statCarbTargetEl.textContent = `${carbsGram.toFixed(0)} г`;
+    updateAiProfile();
+    saveState();
+    renderAll();
+  }
+
+  function fillProfileInputs() {
+    const p = state.profile;
+    ageInput.value = p.age ?? 35;
+    heightInput.value = p.height ?? 180;
+    weightInput.value = p.weight ?? 75;
+    activityInput.value = p.activity ?? 1.55;
+    if (p.bmr) bmrValueEl.textContent = p.bmr.toFixed(0);
+    if (p.tdee) tdeeValueEl.textContent = p.tdee.toFixed(0);
+    if (p.targetCal) targetCalValueEl.textContent = p.targetCal.toFixed(0);
+    if (p.proteinTarget) {
+      const proteinMin = 1.6 * p.weight;
+      const proteinMax = 2.2 * p.weight;
+      statProteinTargetEl.textContent = `${proteinMin.toFixed(0)}–${proteinMax.toFixed(0)} г`;
+    }
+    if (p.fatTarget) {
+      const fatMin = 0.8 * p.weight;
+      const fatMax = 1.0 * p.weight;
+      statFatTargetEl.textContent = `${fatMin.toFixed(0)}–${fatMax.toFixed(0)} г`;
+    }
+    if (p.carbTarget) {
+      statCarbTargetEl.textContent = `${p.carbTarget.toFixed(0)} г`;
+    }
+  }
+
+  function updateAiProfile() {
+    const p = state.profile;
+    if (!p.bmr || !p.tdee || !p.targetCal) {
+      aiProfileText.textContent = 'Заполни профиль и цель, чтобы увидеть рекомендации по калорийности и БЖУ.';
+      return;
+    }
+    let text = `Текущий вес: ~${p.weight.toFixed(1)} кг. Для поддержки веса тебе нужно около ${p.tdee.toFixed(0)} ккал в день. `;
+    text += `Для цели −0.5 кг в неделю дневная цель — примерно ${p.targetCal.toFixed(0)} ккал.\n\n`;
+    text += `По БЖУ: стоит целиться примерно в ${(p.proteinTarget ?? (1.9*p.weight)).toFixed(0)} г белка, ${(p.fatTarget ?? (0.9*p.weight)).toFixed(0)} г жиров и ~${(p.carbTarget ?? 0).toFixed(0)} г углеводов. `;
+    text += `Если ты будешь держать такой дефицит и достаточно спать/двигаться, ожидаемое снижение веса — около 0.5 кг в неделю.`;
+    aiProfileText.textContent = text;
+  }
+
+  function ensureDay(date) {
+    if (!state.days[date]) {
+      state.days[date] = { weight: null, water: 0, foods: [] };
+    }
+    return state.days[date];
+  }
+
+  function onDateChange() {
+    const date = dayDateInput.value;
+    if (!date) return;
+    const day = ensureDay(date);
+    dayWeightInput.value = day.weight != null ? day.weight : '';
+    waterInput.value = (day.water ?? 0);
+    renderDayFoods();
+    renderDayStats();
+  }
+
+  function saveDayWeight() {
+    const date = dayDateInput.value;
+    if (!date) {
+      dayErrorEl.textContent = 'Выбери дату.';
+      return;
+    }
+    const weight = parseFloat(dayWeightInput.value);
+    if (isNaN(weight) || weight <= 0) {
+      dayErrorEl.textContent = 'Введи корректный вес.';
+      return;
+    }
+    const day = ensureDay(date);
+    day.weight = weight;
+    state.profile.weight = weight;
+    recalcProfile();
+    dayErrorEl.textContent = '';
+    saveState();
+    renderAll();
+  }
+
+  function saveWater() {
+    const date = dayDateInput.value;
+    if (!date) {
+      dayErrorEl.textContent = 'Выбери дату.';
+      return;
+    }
+    const water = parseFloat(waterInput.value);
+    if (isNaN(water) || water < 0) {
+      dayErrorEl.textContent = 'Введи корректное количество воды.';
+      return;
+    }
+    const day = ensureDay(date);
+    day.water = water;
+    dayErrorEl.textContent = '';
+    saveState();
+    renderAll();
+  }
+
+  function fillFoodSelect() {
+    foodSelectEl.innerHTML = '<option value="">— выбрать —</option>';
+    foodDb.forEach(prod => {
+      const opt = document.createElement('option');
+      opt.value = prod.id;
+      opt.textContent = `${prod.name} (${prod.kcal100} ккал/100г)`;
+      foodSelectEl.appendChild(opt);
+    });
+  }
+
+  function renderFoodDbTable() {
+    foodDbBody.innerHTML = '';
+    foodDb.forEach(prod => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${prod.name}</td>
+        <td>${prod.kcal100}</td>
+        <td>${prod.protein100}</td>
+        <td>${prod.fat100}</td>
+        <td>${prod.carb100}</td>
+        <td>${prod.category || ''}</td>`;
+      foodDbBody.appendChild(tr);
+    });
+  }
+
+  foodSelectEl.addEventListener('change', () => {
+    const id = foodSelectEl.value;
+    if (!id) {
+      foodNameInput.value = '';
+      foodKcal100Input.value = 0;
+      foodProt100Input.value = 0;
+      foodFat100Input.value = 0;
+      foodCarb100Input.value = 0;
+      foodHint.textContent = 'Выбери продукт из базы или заполни свои значения.';
+      return;
+    }
+    const prod = foodDb.find(p => p.id === id);
+    if (!prod) return;
+    foodNameInput.value = prod.name;
+    foodKcal100Input.value = prod.kcal100;
+    foodProt100Input.value = prod.protein100;
+    foodFat100Input.value = prod.fat100;
+    foodCarb100Input.value = prod.carb100;
+    recalcFoodKcal();
+    foodHint.textContent = `Выбран: ${prod.name}. Можешь изменить граммы — калорийность пересчитается автоматически.`;
+  });
+
+  btnToggleFoodDb.addEventListener('click', () => {
+    const visible = foodDbSection.style.display !== 'none';
+    foodDbSection.style.display = visible ? 'none' : 'block';
+  });
+
+  function recalcFoodKcal() {
+    const grams = parseFloat(foodGramInput.value) || 0;
+    const kcal100 = parseFloat(foodKcal100Input.value) || 0;
+    const kcal = grams * kcal100 / 100;
+    foodKcalTotalInput.value = kcal.toFixed(0);
+  }
+
+  btnRecalcFoodKcal.addEventListener('click', recalcFoodKcal);
+  foodGramInput.addEventListener('input', recalcFoodKcal);
+  foodKcal100Input.addEventListener('input', recalcFoodKcal);
+
+  function addFood() {
+    const date = dayDateInput.value;
+    if (!date) {
+      dayErrorEl.textContent = 'Выбери дату.';
+      return;
+    }
+    let name = foodNameInput.value.trim();
+    const grams = parseFloat(foodGramInput.value);
+    let kcal100 = parseFloat(foodKcal100Input.value);
+    let prot100 = parseFloat(foodProt100Input.value);
+    let fat100 = parseFloat(foodFat100Input.value);
+    let carb100 = parseFloat(foodCarb100Input.value);
+    let kcalTotal = parseFloat(foodKcalTotalInput.value);
+
+    if (!name) {
+      dayErrorEl.textContent = 'Укажи название продукта.';
+      return;
+    }
+    if (isNaN(grams) || grams <= 0) {
+      dayErrorEl.textContent = 'Укажи граммы.';
+      return;
+    }
+    if (isNaN(kcalTotal) || kcalTotal < 0) {
+      dayErrorEl.textContent = 'Калории указаны некорректно.';
+      return;
+    }
+    if (isNaN(kcal100) || kcal100 <= 0) {
+      kcal100 = kcalTotal * 100 / grams;
+    }
+    if (isNaN(prot100)) prot100 = 0;
+    if (isNaN(fat100)) fat100 = 0;
+    if (isNaN(carb100)) carb100 = 0;
+
+    const day = ensureDay(date);
+    day.foods.push({
+      id: Date.now() + Math.random(),
+      name,
+      grams,
+      kcal: kcalTotal,
+      prot: prot100 * grams / 100,
+      fat: fat100 * grams / 100,
+      carb: carb100 * grams / 100
+    });
+    dayErrorEl.textContent = '';
+    saveState();
+    renderAll();
+  }
+
+  function renderDayFoods() {
+    const date = dayDateInput.value;
+    if (!date) {
+      foodTableBody.innerHTML = '<tr><td colspan="7">Выбери дату.</td></tr>';
+      return;
+    }
+    const day = ensureDay(date);
+    if (!day.foods.length) {
+      foodTableBody.innerHTML = '<tr><td colspan="7">Пока нет добавленных продуктов за выбранный день.</td></tr>';
+      return;
+    }
+    foodTableBody.innerHTML = '';
+    day.foods.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${f.name}</td>
+        <td>${f.grams.toFixed(0)}</td>
+        <td>${f.kcal.toFixed(0)}</td>
+        <td>${f.prot.toFixed(1)}</td>
+        <td>${f.fat.toFixed(1)}</td>
+        <td>${f.carb.toFixed(1)}</td>
+        <td><button class="btn btn-soft" data-id="${f.id}" data-action="delFood">✕</button></td>`;
+      foodTableBody.appendChild(tr);
+    });
+    foodTableBody.querySelectorAll('button[data-action="delFood"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const d = ensureDay(date);
+        d.foods = d.foods.filter(x => String(x.id) !== String(id));
+        saveState();
+        renderAll();
+      });
+    });
+  }
+
+  function renderDayStats() {
+    const date = dayDateInput.value;
+    if (!date) {
+      dayCalStat.textContent = '—';
+      dayProtStat.textContent = '—';
+      dayFatStat.textContent = '—';
+      dayCarbStat.textContent = '—';
+      return;
+    }
+    const day = ensureDay(date);
+    const sum = day.foods.reduce((acc, f) => {
+      acc.kcal += f.kcal;
+      acc.prot += f.prot;
+      acc.fat += f.fat;
+      acc.carb += f.carb;
+      return acc;
+    }, {kcal:0,prot:0,fat:0,carb:0});
+    dayCalStat.textContent = sum.kcal.toFixed(0);
+    dayProtStat.textContent = sum.prot.toFixed(0);
+    dayFatStat.textContent = sum.fat.toFixed(0);
+    dayCarbStat.textContent = sum.carb.toFixed(0);
+  }
+
+  function setReminder() {
+    const msg = reminderMsgInput.value.trim() || 'Пора проверить дневник питания';
+    const mins = parseInt(reminderMinutesInput.value, 10);
+    if (isNaN(mins) || mins <= 0) {
+      reminderStatus.textContent = 'Укажи, через сколько минут напомнить.';
+      return;
+    }
+    const ms = mins * 60000;
+    reminderStatus.textContent = `Напоминание через ${mins} мин…`;
+    setTimeout(() => {
+      alert('Напоминание: ' + msg);
+      reminderStatus.textContent = 'Напоминание сработало. Можно создать новое.';
+    }, ms);
+  }
+
+  function getDailySeries() {
+    const dates = Object.keys(state.days).sort();
+    const p = state.profile;
+    const tdee = p.tdee || calcBmrMifflinMale(p.weight, p.height, p.age) * (p.activity || 1.55);
+    const targetCal = p.targetCal || (tdee - 500);
+    const arr = [];
+    let cumDef = 0;
+    let prevWeight = null;
+    dates.forEach(d => {
+      const day = state.days[d];
+      const totalKcal = (day.foods || []).reduce((s,f)=>s+f.kcal,0);
+      const deficit = totalKcal - targetCal;
+      cumDef += deficit;
+      const fatDeltaKg = deficit / 7700;
+      const weight = day.weight != null ? day.weight : prevWeight;
+      if (day.weight != null) prevWeight = day.weight;
+      arr.push({
+        date: d,
+        kcal: totalKcal,
+        deficit,
+        cumDeficit: cumDef,
+        fatDeltaKg,
+        weight,
+        water: day.water ?? 0,
+        tdee,
+        targetCal
+      });
+    });
+    return arr;
+  }
+
+  function renderCharts() {
+    if (chartCalories) chartCalories.destroy();
+    if (chartWeight) chartWeight.destroy();
+    if (chartFat) chartFat.destroy();
+    if (chartWater) chartWater.destroy();
+
+    const series = getDailySeries();
+    if (!series.length) return;
+    const labels = series.map(s => s.date);
+    const kcalData = series.map(s => s.kcal);
+    const targetData = series.map(s => s.targetCal);
+    const tdeeData = series.map(s => s.tdee);
+
+    chartCalories = new Chart(chartCaloriesEl, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Съедено, ккал',
+            data: kcalData,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.2)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 2
+          },
+          {
+            label: 'Цель (−0.5 кг/нед)',
+            data: targetData,
+            borderColor: '#f97316',
+            borderDash: [6,4],
+            borderWidth: 1.5,
+            tension: 0,
+            pointRadius: 0
+          },
+          {
+            label: 'TDEE',
+            data: tdeeData,
+            borderColor: '#4b5563',
+            borderDash: [4,4],
+            borderWidth: 1,
+            tension: 0,
+            pointRadius: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { ticks: { font: { size: 10 } } },
+          y: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+
+    const weightLabels = series.filter(s => s.weight != null).map(s => s.date);
+    const weightData = series.filter(s => s.weight != null).map(s => s.weight);
+    if (weightLabels.length) {
+      chartWeight = new Chart(chartWeightEl, {
+        type: 'line',
+        data: {
+          labels: weightLabels,
+          datasets: [{
+            label: 'Вес, кг',
+            data: weightData,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34,197,94,0.25)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: true } },
+          scales: {
+            x: { ticks: { font: { size: 10 } } },
+            y: { ticks: { font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    const cumFatData = series.map(s => s.cumDeficit / 7700);
+    chartFat = new Chart(chartFatEl, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Накопл. изменение жира (кг, расчёт)',
+          data: cumFatData,
+          borderColor: '#e11d48',
+          backgroundColor: 'rgba(225,29,72,0.25)',
+          borderWidth: 2,
+          tension: 0.2,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { ticks: { font: { size: 10 } } },
+          y: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+
+    const waterData = series.map(s => s.water);
+    const waterGoalData = series.map(() => state.waterGoal || 2.5);
+    chartWater = new Chart(chartWaterEl, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            type: 'bar',
+            label: 'Вода, л',
+            data: waterData,
+            backgroundColor: 'rgba(56,189,248,0.5)'
+          },
+          {
+            type: 'line',
+            label: 'Цель по воде',
+            data: waterGoalData,
+            borderColor: '#1d4ed8',
+            borderWidth: 1.5,
+            borderDash: [5,3],
+            pointRadius: 0,
+            tension: 0
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { ticks: { font: { size: 10 } } },
+          y: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  function pearson(xs, ys) {
+    const n = xs.length;
+    if (n < 2) return NaN;
+    const meanX = xs.reduce((s,v)=>s+v,0)/n;
+    const meanY = ys.reduce((s,v)=>s+v,0)/n;
+    let num = 0, denX = 0, denY = 0;
+    for (let i=0;i<n;i++) {
+      const dx = xs[i] - meanX;
+      const dy = ys[i] - meanY;
+      num += dx * dy;
+      denX += dx*dx;
+      denY += dy*dy;
+    }
+    const den = Math.sqrt(denX * denY);
+    if (!den) return NaN;
+    return num / den;
+  }
+
+  function renderAnalytics() {
+    const series = getDailySeries();
+    const def = [];
+    const deltaWeight = [];
+    let prevWeight = null;
+    series.forEach(s => {
+      if (s.weight != null && prevWeight != null) {
+        def.push(s.deficit);
+        deltaWeight.push(s.weight - prevWeight);
+      }
+      if (s.weight != null) prevWeight = s.weight;
+    });
+    if (def.length >= 2) {
+      const corr = pearson(def, deltaWeight);
+      corrDeficitWeightEl.textContent = corr.toFixed(3);
+    } else {
+      corrDeficitWeightEl.textContent = '—';
+    }
+
+    if (!series.length) {
+      avgDeficitEl.textContent = '—';
+      weightDeltaEl.textContent = '—';
+      aiAnalyticsText.textContent = 'Пока мало данных. Записывай калории и вес хотя бы неделю, и здесь появится разбор прогресса относительно цели −0.5 кг/нед.';
+      return;
+    }
+
+    const avgDef = series.reduce((s,v)=>s+v.deficit,0)/series.length;
+    avgDeficitEl.textContent = avgDef.toFixed(0) + ' ккал/день';
+    const firstWeight = series.find(s => s.weight != null)?.weight;
+    const lastWeight = [...series].reverse().find(s => s.weight != null)?.weight;
+    if (firstWeight != null && lastWeight != null) {
+      const delta = lastWeight - firstWeight;
+      weightDeltaEl.textContent = delta.toFixed(2) + ' кг';
+    } else {
+      weightDeltaEl.textContent = '—';
+    }
+
+    let text = '';
+    if (firstWeight != null && lastWeight != null) {
+      const days = series.length;
+      const weeks = days / 7;
+      const expectedDeltaKg = (avgDef * days) / 7700;
+      text += `За период с ${series[0].date} по ${series[series.length-1].date} прошло около ${weeks.toFixed(1)} недель.\n`;
+      text += `Средний дневной дефицит/профицит: ${avgDef.toFixed(0)} ккал.\n`;
+      text += `По расчётам, ожидаемое изменение жира: ${expectedDeltaKg.toFixed(2)} кг.\n`;
+      text += `Фактическое изменение веса: ${(lastWeight-firstWeight).toFixed(2)} кг.\n\n`;
+      if (!isNaN(expectedDeltaKg)) {
+        const diff = (lastWeight-firstWeight) - expectedDeltaKg;
+        if (Math.abs(diff) < 0.5) {
+          text += 'Фактическая динамика веса достаточно близка к теоретически ожидаемой. Скорее всего, цель по дефициту выбрана адекватно.';
+        } else if ((lastWeight-firstWeight) < expectedDeltaKg) {
+          text += 'Вес падает чуть медленнее, чем прогноз по калориям. Возможные причины: погрешности в учёте еды, задержка жидкости, недосып или гормональные факторы.';
+        } else {
+          text += 'Вес снижается быстрее или даже растёт при дефиците. Стоит проверить точность учёта еды, весов продуктов и возможное изменение активности.';
+        }
+      }
+    } else {
+      text = 'Пока мало точек с весом. Записывай вес хотя бы несколько раз в неделю, чтобы сравнить динамику с калорийностью.';
+    }
+    aiAnalyticsText.textContent = text;
+  }
+
+  function parseHealthXml(text) {
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, 'text/xml');
+    const recordNodes = Array.from(xmlDoc.getElementsByTagName('Record'));
+    const daily = {};
+    recordNodes.forEach(node => {
+      const type = node.getAttribute('type') || '';
+      const startDate = node.getAttribute('startDate') || '';
+      const value = parseFloat(node.getAttribute('value') || '0');
+      if (!startDate || isNaN(value)) return;
+      const date = startDate.split(' ')[0];
+      if (!daily[date]) daily[date] = { steps:0, activeEnergy:0 };
+      if (type.includes('StepCount')) daily[date].steps += value;
+      if (type.includes('ActiveEnergyBurned')) daily[date].activeEnergy += value;
+    });
+    state.health = Object.keys(daily).sort().map(d => ({
+      date: d,
+      steps: daily[d].steps,
+      activeEnergy: daily[d].activeEnergy
+    }));
+    saveState();
+    renderHealthTable();
+  }
+
+  function renderHealthTable() {
+    if (!state.health.length) {
+      healthTableBody.innerHTML = '<tr><td colspan="3">Пока нет импортированных данных.</td></tr>';
+      return;
+    }
+    healthTableBody.innerHTML = '';
+    state.health.forEach(h => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${h.date}</td><td>${h.steps.toFixed(0)}</td><td>${h.activeEnergy.toFixed(0)}</td>`;
+      healthTableBody.appendChild(tr);
+    });
+  }
+
+  function saveWaterGoal() {
+    const g = parseFloat(waterGoalInput.value);
+    if (isNaN(g) || g <= 0) return;
+    state.waterGoal = g;
+    saveState();
+    renderAll();
+  }
+
+  function addCustomProduct() {
+    const name = customProdNameInput.value.trim();
+    const kcal = parseFloat(customProdKcalInput.value);
+    const prot = parseFloat(customProdProtInput.value);
+    const fat = parseFloat(customProdFatInput.value);
+    const carb = parseFloat(customProdCarbInput.value);
+    const cat = customProdCatInput.value.trim() || 'другое';
+    if (!name || isNaN(kcal)) return;
+    const id = 'custom_' + Date.now();
+    foodDb.push({
+      id,
+      name,
+      kcal100: isNaN(kcal)?0:kcal,
+      protein100: isNaN(prot)?0:prot,
+      fat100: isNaN(fat)?0:fat,
+      carb100: isNaN(carb)?0:carb,
+      category: cat
+    });
+    saveState();
+    fillFoodSelect();
+    renderFoodDbTable();
+    customProdNameInput.value = '';
+    customProdKcalInput.value = '';
+    customProdProtInput.value = '';
+    customProdFatInput.value = '';
+    customProdCarbInput.value = '';
+    customProdCatInput.value = '';
+  }
+
+  function exportCsvAll() {
+    const series = getDailySeries();
+    if (!series.length) {
+      alert('Нет данных для экспорта.');
+      return;
+    }
+    const header = ['date','weight','kcal','deficit','cumDeficit','cumFatKg','water'];
+    const lines = [header.join(',')];
+    series.forEach(s => {
+      const row = [
+        s.date,
+        s.weight != null ? s.weight.toFixed(2) : '',
+        s.kcal.toFixed(0),
+        s.deficit.toFixed(0),
+        s.cumDeficit.toFixed(0),
+        (s.cumDeficit/7700).toFixed(3),
+        s.water.toFixed(2)
+      ];
+      lines.push(row.join(','));
+    });
+    const csv = lines.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nutri_journal.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportHtmlReport() {
+    const series = getDailySeries();
+    const p = state.profile;
+    let html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Нутри-отчёт</title>';
+    html += '<style>body{font-family:system-ui,sans-serif;background:#0f172a;color:#e5e7eb;padding:16px;max-width:900px;margin:0 auto}h1,h2{color:#f9fafb}table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}th,td{border:1px solid #1f2937;padding:4px 6px}th{background:#111827}</style>';
+    html += '</head><body>';
+    html += '<h1>Нутри-отчёт</h1>';
+    html += `<p><b>Возраст:</b> ${p.age ?? ''}, <b>Рост:</b> ${p.height ?? ''} см, <b>Вес:</b> ${p.weight ?? ''} кг</p>`;
+    if (p.bmr) html += `<p><b>BMR:</b> ${p.bmr.toFixed(0)} ккал, <b>TDEE:</b> ${p.tdee.toFixed(0)} ккал, <b>Цель:</b> ${p.targetCal.toFixed(0)} ккал.</p>`;
+
+    html += '<h2>Дневные данные</h2>';
+    if (!series.length) {
+      html += '<p>Пока нет записей.</p>';
+    } else {
+      html += '<table><thead><tr><th>Дата</th><th>Вес</th><th>Ккал</th><th>Дефицит</th><th>Накопл. дефицит</th><th>Накопл. жир (кг)</th><th>Вода, л</th></tr></thead><tbody>';
+      series.forEach(s => {
+        html += `<tr><td>${s.date}</td><td>${s.weight!=null?s.weight.toFixed(1):''}</td><td>${s.kcal.toFixed(0)}</td><td>${s.deficit.toFixed(0)}</td><td>${s.cumDeficit.toFixed(0)}</td><td>${(s.cumDeficit/7700).toFixed(3)}</td><td>${s.water.toFixed(2)}</td></tr>`;
+      });
+      html += '</tbody></table>';
+    }
+
+    html += '<h2>Краткое резюме</h2>';
+    html += `<p>${aiProfileText.textContent.replace(/\n/g,'<br>')}</p>`;
+    html += `<p>${aiAnalyticsText.textContent.replace(/\n/g,'<br>')}</p>`;
+    html += '</body></html>';
+
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'nutri_report.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  btnSaveProfile.addEventListener('click', recalcProfile);
+  btnToday.addEventListener('click', () => { setToday(); onDateChange(); });
+  dayDateInput.addEventListener('change', onDateChange);
+  btnSaveDayWeight.addEventListener('click', saveDayWeight);
+  btnSaveWater.addEventListener('click', saveWater);
+  btnAddFood.addEventListener('click', addFood);
+  btnSetReminder.addEventListener('click', setReminder);
+  btnSaveWaterGoal.addEventListener('click', saveWaterGoal);
+  btnAddCustomProduct.addEventListener('click', addCustomProduct);
+  btnExportCsvAll.addEventListener('click', exportCsvAll);
+  btnExportHtml.addEventListener('click', exportHtmlReport);
+
+  btnParseHealth.addEventListener('click', () => {
+    const file = healthFileInput.files && healthFileInput.files[0];
+    if (!file) { alert('Выбери файл export.xml'); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        parseHealthXml(reader.result);
+      } catch (e) {
+        console.error(e);
+        alert('Ошибка разбора XML.');
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  photoInput.addEventListener('change', () => {
+    if (photoInput.files && photoInput.files[0]) {
+      alert('Фото прикреплено как заметка. Оно не загружается никуда и не анализируется.');
+    }
+  });
+
+  function renderAll() {
+    renderDayFoods();
+    renderDayStats();
+    renderCharts();
+    renderAnalytics();
+    renderHealthTable();
+  }
+
+  loadState();
+  fillProfileInputs();
+  waterGoalInput.value = state.waterGoal ?? 2.5;
+  setToday();
+  fillFoodSelect();
+  renderFoodDbTable();
+  updateAiProfile();
+  onDateChange();
+  renderAll();
+</script>
+</body>
+</html>
