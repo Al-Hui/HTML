@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Калькулятор регулярных расходов</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --card: #020617;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --accent-blue: #38bdf8;
+      --accent-orange: #fb923c;
+      --accent-soft: rgba(56,189,248,0.12);
+      --accent-soft-orange: rgba(251,146,60,0.12);
+      --border: #1f2937;
+      --danger: #f97373;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.8);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 45%, #020617 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      color: var(--text);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1120px;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 55%),
+        radial-gradient(circle at top right, rgba(251,146,60,0.15), transparent 60%),
+        var(--bg-elevated);
+      border-radius: 24px;
+      border: 1px solid rgba(148,163,184,0.5);
+      box-shadow: var(--shadow-soft);
+      padding: 18px 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title span.icon { font-size: 22px; }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .chip {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.92);
+      padding: 3px 9px;
+      font-size: 11px;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chip b {
+      color: var(--accent-blue);
+      font-weight: 600;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg,var(--accent-blue),var(--accent-orange));
+      color: #f9fafb;
+      box-shadow: 0 14px 30px rgba(37,99,235,0.7);
+    }
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: var(--muted);
+      border: 1px solid rgba(148,163,184,0.7);
+    }
+    .btn-soft {
+      background: rgba(15,23,42,0.72);
+      color: var(--muted);
+      border: 1px solid rgba(55,65,81,0.9);
+    }
+    .btn-danger {
+      background: rgba(127,29,29,0.92);
+      color: #fecaca;
+      border: 1px solid rgba(248,113,113,0.85);
+    }
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+    .btn-xs {
+      padding: 3px 7px;
+      font-size: 11px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+      border-bottom: 1px solid rgba(31,41,55,0.95);
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: var(--accent-soft);
+      color: var(--accent-blue);
+      border: 1px solid rgba(56,189,248,0.65);
+    }
+    .tab-icon { font-size: 13px; }
+    .tab-content { display: none; margin-top: 8px; }
+    .tab-content.active { display: block; }
+
+    .section {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 10px 12px 12px;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.96), #020617);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-title span.icon { font-size: 15px; }
+    .section-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.35;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="month"],
+    select,
+    textarea {
+      padding: 5px 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(31,41,55,0.95);
+      font-size: 12px;
+      background: rgba(15,23,42,0.96);
+      color: var(--text);
+      min-width: 70px;
+    }
+    input[type="number"] { width: 90px; }
+    input[type="date"] { width: 140px; }
+    input[type="month"] { width: 145px; }
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(55,65,81,0.9);
+      background: rgba(15,23,42,0.9);
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .pill b { color: var(--accent-orange); }
+
+    .table-wrap {
+      margin-top: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      overflow: auto;
+      max-height: 340px;
+      background: rgba(15,23,42,0.96);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    thead {
+      background: rgba(15,23,42,0.98);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th, td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(31,41,55,0.95);
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    tbody tr:nth-child(even) td { background: rgba(15,23,42,0.9); }
+    tbody tr:nth-child(odd) td { background: rgba(15,23,42,0.86); }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .stat-card {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 6px 8px;
+      background: rgba(15,23,42,0.97);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .stat-note {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .chart-box {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 8px 10px 10px;
+      background: rgba(15,23,42,0.97);
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    canvas {
+      width: 100%;
+      height: 210px;
+    }
+
+    .ai-box {
+      margin-top: 6px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(251,146,60,0.8);
+      padding: 6px 8px;
+      background: rgba(30,64,175,0.65);
+      font-size: 12px;
+    }
+    .ai-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-title .icon { font-size: 14px; }
+    .ai-text {
+      font-size: 11.5px;
+      color: #fefce8;
+      line-height: 1.5;
+    }
+
+    .error {
+      font-size: 11px;
+      color: var(--danger);
+      min-height: 14px;
+    }
+
+    @media (max-width: 768px) {
+      .app { padding: 14px 10px 14px; border-radius: 18px; }
+      .header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="title">
+        <span class="icon">💸</span>
+        Калькулятор регулярных расходов
+      </div>
+      <div class="subtitle">
+        Планируешь бюджет на месяц, получаешь дневной лимит, вносишь реальные траты — в конце месяца видишь аналитику и графики.
+      </div>
+      <div class="chip-row">
+        <div class="chip">Хранение: <b>LocalStorage</b></div>
+        <div class="chip">Фокус: <b>ежемесячный бюджет</b></div>
+        <div class="chip">Графики: <b>Chart.js</b></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+      <label class="small">Активный месяц</label>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="month" id="monthSelector">
+        <button class="btn btn-soft" id="btnSetCurrentMonth" type="button">Текущий</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-plan">
+      <span class="tab-icon">📅</span>План бюджета
+    </button>
+    <button class="tab-btn" data-tab="tab-expenses">
+      <span class="tab-icon">🧾</span>Траты
+    </button>
+    <button class="tab-btn" data-tab="tab-analytics">
+      <span class="tab-icon">📊</span>Аналитика
+    </button>
+    <button class="tab-btn" data-tab="tab-export">
+      <span class="tab-icon">📤</span>Экспорт / Импорт
+    </button>
+  </div>
+
+  <!-- План бюджета -->
+  <div class="tab-content active" id="tab-plan">
+    <div class="section">
+      <div class="section-title"><span class="icon">📅</span>План бюджета на месяц</div>
+      <div class="section-sub">
+        Выбери месяц сверху. Укажи общий бюджет и фиксированные расходы (аренда, подписки, кредиты). Программа посчитает, сколько можно тратить в день.
+      </div>
+
+      <div class="row">
+        <label>Бюджет на месяц, ₽
+          <input type="number" id="planBudgetInput" min="0" step="1000" placeholder="например, 120000">
+        </label>
+        <button class="btn btn-primary" id="btnSaveBudget" type="button">💾 Сохранить бюджет</button>
+        <span class="small" id="planMonthLabel"></span>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Бюджет месяца</div>
+          <div class="stat-value" id="statPlanBudget">—</div>
+          <div class="stat-note">Общая сумма, которую планируешь потратить.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Фиксированные расходы</div>
+          <div class="stat-value" id="statPlanFixed">—</div>
+          <div class="stat-note">Аренда, подписки, кредиты и т.п.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Доступно на переменные траты</div>
+          <div class="stat-value" id="statPlanVariable">—</div>
+          <div class="stat-note">Бюджет на «повседневные» расходы (еда, кафе, транспорт…).</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Рекомендуемый дневной лимит</div>
+          <div class="stat-value" id="statDailyLimit">—</div>
+          <div class="stat-note">Равномерное распределение переменного бюджета по дням месяца.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">🔁</span>Фиксированные ежемесячные расходы</div>
+      <div class="section-sub">
+        Добавь сюда регулярные расходы, которые платишь каждый месяц. Они будут автоматически вычитаться из бюджета месяца.
+      </div>
+
+      <div class="row">
+        <label>Название
+          <input type="text" id="fixedNameInput" placeholder="Например, аренда, Spotify, интернет">
+        </label>
+        <label>Сумма, ₽
+          <input type="number" id="fixedAmountInput" min="0" step="100">
+        </label>
+        <button class="btn btn-secondary" id="btnAddFixed" type="button">Добавить фикс. расход</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Название</th>
+            <th>Сумма, ₽</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody id="fixedTableBody">
+          <tr><td colspan="3">Нет фиксированных расходов для этого месяца.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="error" id="planError"></div>
+    </div>
+  </div>
+
+  <!-- Траты -->
+  <div class="tab-content" id="tab-expenses">
+    <div class="section">
+      <div class="section-title"><span class="icon">➕</span>Добавить трату</div>
+      <div class="section-sub">
+        Вноси каждую трату: дату, сумму, категорию и комментарий. По месяцу сверху будет считаться статистика.
+      </div>
+
+      <div class="row">
+        <label>Дата
+          <input type="date" id="expenseDateInput">
+        </label>
+        <button class="btn btn-soft" id="btnTodayExpense" type="button">Сегодня</button>
+      </div>
+
+      <div class="row">
+        <label>Сумма, ₽
+          <input type="number" id="expenseAmountInput" min="0" step="10">
+        </label>
+        <label>Категория
+          <select id="expenseCategoryInput">
+          </select>
+        </label>
+      </div>
+
+      <div class="row">
+        <label style="flex:1;">Комментарий
+          <input type="text" id="expenseCommentInput" placeholder="например, супермаркет, такси, обед в кафе">
+        </label>
+      </div>
+
+      <div class="row">
+        <button class="btn btn-primary" id="btnAddExpense" type="button">Добавить трату</button>
+        <button class="btn btn-soft" id="btnClearExpenseForm" type="button">Очистить форму</button>
+      </div>
+
+      <div class="error" id="expenseError"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">📋</span>Траты за выбранный месяц</div>
+      <div class="section-sub">
+        Фильтруется по активному месяцу. Можно искать по комментарию и категории.
+      </div>
+
+      <div class="row">
+        <label>Фильтр по категории
+          <select id="filterExpenseCategory">
+            <option value="">Все категории</option>
+          </select>
+        </label>
+        <label>Поиск по комментарию
+          <input type="text" id="filterExpenseSearch" placeholder="например, 'кафе' или 'такси'">
+        </label>
+        <button class="btn btn-soft" id="btnClearExpenseFilters" type="button">Сбросить фильтры</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Дата</th>
+            <th>Сумма, ₽</th>
+            <th>Категория</th>
+            <th>Комментарий</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody id="expenseTableBody">
+          <tr><td colspan="5">Пока нет трат за этот месяц.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Сумма трат за месяц</div>
+          <div class="stat-value" id="statSpentMonth">—</div>
+          <div class="stat-note">Сумма всех трат, привязанных к выбранному месяцу.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Остаток переменного бюджета</div>
+          <div class="stat-value" id="statVariableLeft">—</div>
+          <div class="stat-note">Сколько ещё можно потратить, чтобы уложиться в план.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Аналитика -->
+  <div class="tab-content" id="tab-analytics">
+    <div class="section">
+      <div class="section-title"><span class="icon">📊</span>Графики расходов</div>
+      <div class="section-sub">
+        Линия по дням месяца и распределение по категориям помогают увидеть, «съедается» ли бюджет слишком быстро.
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-box">
+          <div class="chart-title">Расходы по дням месяца</div>
+          <canvas id="chartDaily"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Распределение по категориям</div>
+          <canvas id="chartCategory"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title"><span class="icon">📈</span>Финансовый обзор месяца</div>
+      <div class="section-sub">
+        Краткий разбор: насколько траты соотносятся с бюджетом, хватит ли денег до конца месяца и где основные «пожиратели» бюджета.
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">План / Факт</div>
+          <div class="stat-value" id="statPlanVsFact">—</div>
+          <div class="stat-note">Бюджет минус фактические расходы (фиксированные + переменные).</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Средний расход в день</div>
+          <div class="stat-value" id="statAvgPerDay">—</div>
+          <div class="stat-note">Сумма трат / количество прошедших дней месяца.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Прогноз конца месяца</div>
+          <div class="stat-value" id="statForecast">—</div>
+          <div class="stat-note">Оценка, сколько будет потрачено к концу месяца при текущем темпе.</div>
+        </div>
+      </div>
+
+      <div class="ai-box">
+        <div class="ai-title">
+          <span class="icon">🧠</span>
+          Мини-анализ по месяцу
+        </div>
+        <div class="ai-text" id="aiSummaryText">
+          Как только у тебя появятся данные по бюджету и хотя бы несколько трат, здесь появится разбор: укладываешься ли ты в план, «горячие» категории расходов и примерные рекомендации.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экспорт / импорт -->
+  <div class="tab-content" id="tab-export">
+    <div class="section">
+      <div class="section-title"><span class="icon">📤</span>Экспорт / Импорт данных</div>
+      <div class="section-sub">
+        Можно сохранить резервную копию всех планов и трат в JSON-файл и при необходимости восстановить или перенести на другое устройство.
+      </div>
+
+      <div class="row">
+        <button class="btn btn-secondary" id="btnExportJson" type="button">⬇ Экспортировать JSON</button>
+        <label class="btn btn-soft" style="cursor:pointer;">
+          📥 Импортировать JSON
+          <input type="file" id="importFileInput" accept=".json" style="display:none;">
+        </label>
+      </div>
+
+      <div class="small">
+        При импорте можно объединить данные с текущими или полностью заменить — приложение спросит, что ты хочешь сделать.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const STORAGE_KEY = 'regular_expenses_v1';
+
+  let state = {
+    categories: [
+      'Еда',
+      'Транспорт',
+      'Жильё',
+      'Подписки',
+      'Развлечения',
+      'Покупки',
+      'Здоровье',
+      'Другое'
+    ],
+    plans: {
+      // '2025-11': { monthKey:'2025-11', budget: 120000, fixed: [ {id,name,amount} ] }
+    },
+    expenses: [
+      // {id, date:'YYYY-MM-DD', amount, category, comment}
+    ]
+  };
+
+  let chartDaily = null;
+  let chartCategory = null;
+
+  // Элементы
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  const monthSelector = document.getElementById('monthSelector');
+  const btnSetCurrentMonth = document.getElementById('btnSetCurrentMonth');
+
+  // План
+  const planBudgetInput = document.getElementById('planBudgetInput');
+  const btnSaveBudget = document.getElementById('btnSaveBudget');
+  const planMonthLabel = document.getElementById('planMonthLabel');
+  const fixedNameInput = document.getElementById('fixedNameInput');
+  const fixedAmountInput = document.getElementById('fixedAmountInput');
+  const btnAddFixed = document.getElementById('btnAddFixed');
+  const fixedTableBody = document.getElementById('fixedTableBody');
+  const planError = document.getElementById('planError');
+
+  const statPlanBudget = document.getElementById('statPlanBudget');
+  const statPlanFixed = document.getElementById('statPlanFixed');
+  const statPlanVariable = document.getElementById('statPlanVariable');
+  const statDailyLimit = document.getElementById('statDailyLimit');
+
+  // Траты
+  const expenseDateInput = document.getElementById('expenseDateInput');
+  const btnTodayExpense = document.getElementById('btnTodayExpense');
+  const expenseAmountInput = document.getElementById('expenseAmountInput');
+  const expenseCategoryInput = document.getElementById('expenseCategoryInput');
+  const expenseCommentInput = document.getElementById('expenseCommentInput');
+  const btnAddExpense = document.getElementById('btnAddExpense');
+  const btnClearExpenseForm = document.getElementById('btnClearExpenseForm');
+  const expenseError = document.getElementById('expenseError');
+
+  const filterExpenseCategory = document.getElementById('filterExpenseCategory');
+  const filterExpenseSearch = document.getElementById('filterExpenseSearch');
+  const btnClearExpenseFilters = document.getElementById('btnClearExpenseFilters');
+  const expenseTableBody = document.getElementById('expenseTableBody');
+
+  const statSpentMonth = document.getElementById('statSpentMonth');
+  const statVariableLeft = document.getElementById('statVariableLeft');
+
+  // Аналитика
+  const chartDailyEl = document.getElementById('chartDaily');
+  const chartCategoryEl = document.getElementById('chartCategory');
+
+  const statPlanVsFact = document.getElementById('statPlanVsFact');
+  const statAvgPerDay = document.getElementById('statAvgPerDay');
+  const statForecast = document.getElementById('statForecast');
+  const aiSummaryText = document.getElementById('aiSummaryText');
+
+  // Экспорт / импорт
+  const btnExportJson = document.getElementById('btnExportJson');
+  const importFileInput = document.getElementById('importFileInput');
+
+  // Табы
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const id = btn.getAttribute('data-tab');
+      document.getElementById(id).classList.add('active');
+    });
+  });
+
+  function setCurrentMonthValue() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    monthSelector.value = `${y}-${m}`;
+  }
+
+  btnSetCurrentMonth.addEventListener('click', () => {
+    setCurrentMonthValue();
+    onMonthChange();
+  });
+
+  monthSelector.addEventListener('change', () => {
+    onMonthChange();
+  });
+
+  function getActiveMonthKey() {
+    if (!monthSelector.value) {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+    return monthSelector.value;
+  }
+
+  function daysInMonth(monthKey) {
+    const [yearStr, monthStr] = monthKey.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    return new Date(year, month, 0).getDate();
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (Array.isArray(data.categories)) {
+        state.categories = data.categories;
+      }
+      if (data.plans && typeof data.plans === 'object') {
+        state.plans = data.plans;
+      }
+      if (Array.isArray(data.expenses)) {
+        state.expenses = data.expenses;
+      }
+    } catch (e) {
+      console.error('loadState error', e);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {
+      console.error('saveState error', e);
+    }
+  }
+
+  function getCurrentPlan(monthKey) {
+    return state.plans[monthKey] || {
+      monthKey,
+      budget: 0,
+      fixed: []
+    };
+  }
+
+  function setCurrentPlan(plan) {
+    state.plans[plan.monthKey] = plan;
+  }
+
+  function calcPlanStats(monthKey) {
+    const plan = getCurrentPlan(monthKey);
+    const budget = plan.budget || 0;
+    const fixedSum = (plan.fixed || []).reduce((s, f) => s + (f.amount || 0), 0);
+    const days = daysInMonth(monthKey);
+    const variable = Math.max(budget - fixedSum, 0);
+    const dailyLimit = days > 0 ? variable / days : 0;
+    return { plan, budget, fixedSum, variable, days, dailyLimit };
+  }
+
+  function formatMoney(v) {
+    if (v == null || isNaN(v)) return '—';
+    return v.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽';
+  }
+
+  function formatMoneyWithSign(v) {
+    if (v == null || isNaN(v)) return '—';
+    const sign = v >= 0 ? '+' : '−';
+    const abs = Math.abs(v);
+    return sign + abs.toLocaleString('ru-RU', { maximumFractionDigits: 0 }) + ' ₽';
+  }
+
+  function onMonthChange() {
+    const monthKey = getActiveMonthKey();
+    const plan = getCurrentPlan(monthKey);
+    planBudgetInput.value = plan.budget ? plan.budget : '';
+    const [y, m] = monthKey.split('-');
+    planMonthLabel.textContent = `Текущий месяц: ${m}.${y}`;
+
+    renderFixedExpenses();
+    renderPlanStats();
+    renderExpensesTable();
+    renderExpenseStats();
+    renderCharts();
+    renderAnalytics();
+  }
+
+  // Рендер категорий
+  function renderCategorySelects() {
+    expenseCategoryInput.innerHTML = '';
+    filterExpenseCategory.innerHTML = '<option value="">Все категории</option>';
+    state.categories.forEach(cat => {
+      const opt = document.createElement('option');
+      opt.value = cat;
+      opt.textContent = cat;
+      expenseCategoryInput.appendChild(opt);
+
+      const opt2 = document.createElement('option');
+      opt2.value = cat;
+      opt2.textContent = cat;
+      filterExpenseCategory.appendChild(opt2);
+    });
+  }
+
+  // План — сохранить бюджет
+  btnSaveBudget.addEventListener('click', () => {
+    const monthKey = getActiveMonthKey();
+    let plan = getCurrentPlan(monthKey);
+    const v = parseFloat(planBudgetInput.value);
+    if (isNaN(v) || v < 0) {
+      planError.textContent = 'Укажи корректный бюджет на месяц.';
+      return;
+    }
+    planError.textContent = '';
+    plan.budget = v;
+    plan.monthKey = monthKey;
+    setCurrentPlan(plan);
+    saveState();
+    renderPlanStats();
+    renderExpenseStats();
+    renderanalyticsAndChartsAfterPlanChange();
+  });
+
+  function renderanalyticsAndChartsAfterPlanChange() {
+    renderCharts();
+    renderAnalytics();
+  }
+
+  // План — фиксированные расходы
+  btnAddFixed.addEventListener('click', () => {
+    const name = fixedNameInput.value.trim();
+    const amount = parseFloat(fixedAmountInput.value);
+    if (!name) {
+      planError.textContent = 'Укажи название фиксированного расхода.';
+      return;
+    }
+    if (isNaN(amount) || amount < 0) {
+      planError.textContent = 'Укажи корректную сумму фиксированного расхода.';
+      return;
+    }
+    planError.textContent = '';
+    const monthKey = getActiveMonthKey();
+    const plan = getCurrentPlan(monthKey);
+    if (!Array.isArray(plan.fixed)) plan.fixed = [];
+    plan.fixed.push({
+      id: Date.now() + '_' + Math.random().toString(16).slice(2),
+      name,
+      amount
+    });
+    setCurrentPlan(plan);
+    saveState();
+    fixedNameInput.value = '';
+    fixedAmountInput.value = '';
+    renderFixedExpenses();
+    renderPlanStats();
+    renderExpenseStats();
+    renderanalyticsAndChartsAfterPlanChange();
+  });
+
+  function renderFixedExpenses() {
+    const monthKey = getActiveMonthKey();
+    const plan = getCurrentPlan(monthKey);
+    const fixed = plan.fixed || [];
+    if (!fixed.length) {
+      fixedTableBody.innerHTML = '<tr><td colspan="3">Нет фиксированных расходов для этого месяца.</td></tr>';
+      return;
+    }
+    fixedTableBody.innerHTML = '';
+    fixed.forEach(f => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(f.name || '')}</td>
+        <td>${(f.amount || 0).toLocaleString('ru-RU', { maximumFractionDigits: 0 })}</td>
+        <td><button class="btn btn-danger btn-xs" data-id="${f.id}">✕</button></td>
+      `;
+      fixedTableBody.appendChild(tr);
+    });
+    fixedTableBody.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        const monthKey = getActiveMonthKey();
+        const plan = getCurrentPlan(monthKey);
+        plan.fixed = (plan.fixed || []).filter(f => String(f.id) !== String(id));
+        setCurrentPlan(plan);
+        saveState();
+        renderFixedExpenses();
+        renderPlanStats();
+        renderExpenseStats();
+        renderanalyticsAndChartsAfterPlanChange();
+      });
+    });
+  }
+
+  function renderPlanStats() {
+    const monthKey = getActiveMonthKey();
+    const stats = calcPlanStats(monthKey);
+    statPlanBudget.textContent = stats.budget ? formatMoney(stats.budget) : '—';
+    statPlanFixed.textContent = formatMoney(stats.fixedSum);
+    statPlanVariable.textContent = formatMoney(stats.variable);
+    statDailyLimit.textContent = stats.dailyLimit ? formatMoney(stats.dailyLimit) : '—';
+  }
+
+  // Траты — форма
+  function setExpenseDateToday() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    expenseDateInput.value = `${y}-${m}-${day}`;
+  }
+
+  btnTodayExpense.addEventListener('click', setExpenseDateToday);
+
+  btnAddExpense.addEventListener('click', () => {
+    const date = expenseDateInput.value;
+    const amount = parseFloat(expenseAmountInput.value);
+    const category = expenseCategoryInput.value;
+    const comment = expenseCommentInput.value.trim();
+
+    if (!date) {
+      expenseError.textContent = 'Укажи дату траты.';
+      return;
+    }
+    if (isNaN(amount) || amount <= 0) {
+      expenseError.textContent = 'Укажи корректную сумму траты.';
+      return;
+    }
+    if (!category) {
+      expenseError.textContent = 'Выбери категорию.';
+      return;
+    }
+    expenseError.textContent = '';
+
+    state.expenses.push({
+      id: Date.now() + '_' + Math.random().toString(16).slice(2),
+      date,
+      amount,
+      category,
+      comment
+    });
+    saveState();
+    expenseAmountInput.value = '';
+    expenseCommentInput.value = '';
+    renderExpensesTable();
+    renderExpenseStats();
+    renderCharts();
+    renderAnalytics();
+  });
+
+  btnClearExpenseForm.addEventListener('click', () => {
+    expenseDateInput.value = '';
+    expenseAmountInput.value = '';
+    expenseCategoryInput.value = state.categories[0] || '';
+    expenseCommentInput.value = '';
+    expenseError.textContent = '';
+  });
+
+  // Таблица трат
+  filterExpenseCategory.addEventListener('change', renderExpensesTable);
+  filterExpenseSearch.addEventListener('input', renderExpensesTable);
+  btnClearExpenseFilters.addEventListener('click', () => {
+    filterExpenseCategory.value = '';
+    filterExpenseSearch.value = '';
+    renderExpensesTable();
+  });
+
+  function renderExpensesTable() {
+    const monthKey = getActiveMonthKey();
+    const catFilter = filterExpenseCategory.value;
+    const search = (filterExpenseSearch.value || '').trim().toLowerCase();
+
+    const expenses = state.expenses.filter(e => {
+      if (!e.date || typeof e.date !== 'string') return false;
+      if (!e.date.startsWith(monthKey)) return false;
+      if (catFilter && e.category !== catFilter) return false;
+      if (search) {
+        const comment = (e.comment || '').toLowerCase();
+        if (!comment.includes(search)) return false;
+      }
+      return true;
+    });
+
+    if (!expenses.length) {
+      expenseTableBody.innerHTML = '<tr><td colspan="5">Пока нет трат за этот месяц.</td></tr>';
+      return;
+    }
+
+    expenseTableBody.innerHTML = '';
+    expenses.sort((a, b) => a.date.localeCompare(b.date));
+    expenses.forEach(e => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${escapeHtml(e.date)}</td>
+        <td>${e.amount.toLocaleString('ru-RU', { maximumFractionDigits: 0 })}</td>
+        <td>${escapeHtml(e.category)}</td>
+        <td>${escapeHtml(e.comment || '')}</td>
+        <td><button class="btn btn-danger btn-xs" data-id="${e.id}">✕</button></td>
+      `;
+      expenseTableBody.appendChild(tr);
+    });
+
+    expenseTableBody.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm('Удалить эту трату?')) return;
+        state.expenses = state.expenses.filter(e => String(e.id) !== String(id));
+        saveState();
+        renderExpensesTable();
+        renderExpenseStats();
+        renderCharts();
+        renderAnalytics();
+      });
+    });
+  }
+
+  function renderExpenseStats() {
+    const monthKey = getActiveMonthKey();
+    const stats = calcPlanStats(monthKey);
+    const expensesMonth = state.expenses.filter(e => e.date && e.date.startsWith(monthKey));
+    const spent = expensesMonth.reduce((s, e) => s + (e.amount || 0), 0);
+    const variableLeft = Math.max(stats.variable - spent, -Infinity);
+
+    statSpentMonth.textContent = formatMoney(spent);
+    statVariableLeft.textContent = stats.variable ? formatMoney(variableLeft) : '—';
+  }
+
+  // Аналитика — графики
+  function renderCharts() {
+    const monthKey = getActiveMonthKey();
+    const stats = calcPlanStats(monthKey);
+    const expensesMonth = state.expenses.filter(e => e.date && e.date.startsWith(monthKey));
+    const daysCount = stats.days;
+
+    if (chartDaily) chartDaily.destroy();
+    if (chartCategory) chartCategory.destroy();
+
+    if (!daysCount || !expensesMonth.length) {
+      chartDaily = new Chart(chartDailyEl, {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: { plugins: { legend: { display: false } }, scales: {x:{},y:{}} }
+      });
+      chartCategory = new Chart(chartCategoryEl, {
+        type: 'doughnut',
+        data: { labels: [], datasets: [] },
+        options: { plugins: { legend: { display: false } } }
+      });
+      return;
+    }
+
+    const dailySum = new Array(daysCount).fill(0);
+    expensesMonth.forEach(e => {
+      const day = parseInt(e.date.slice(8,10), 10);
+      if (!isNaN(day) && day >= 1 && day <= daysCount) {
+        dailySum[day-1] += e.amount || 0;
+      }
+    });
+
+    const labels = Array.from({length:daysCount}, (_,i)=>String(i+1));
+    const cumulative = [];
+    let acc = 0;
+    for (let i=0; i<daysCount; i++) {
+      acc += dailySum[i];
+      cumulative.push(acc);
+    }
+    const dailyLimit = stats.dailyLimit;
+    const dailyLimitSeries = dailyLimit ? Array.from({length:daysCount}, (_,i)=>dailyLimit*(i+1)) : [];
+
+    chartDaily = new Chart(chartDailyEl, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Траты за день',
+            data: dailySum,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.25)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 2
+          },
+          {
+            label: 'Накопленные траты',
+            data: cumulative,
+            borderColor: '#fb923c',
+            backgroundColor: 'rgba(251,146,60,0.25)',
+            borderWidth: 2,
+            tension: 0.2,
+            pointRadius: 0
+          },
+          dailyLimit ? {
+            label: 'Линия плана (накоп.)',
+            data: dailyLimitSeries,
+            borderColor: '#64748b',
+            borderWidth: 1.5,
+            borderDash: [5,3],
+            tension: 0,
+            pointRadius: 0
+          } : null
+        ].filter(Boolean)
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, labels: { font: { size: 10 } } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 } } },
+          y: { ticks: { font: { size: 9 } } }
+        }
+      }
+    });
+
+    const categoryMap = {};
+    expensesMonth.forEach(e => {
+      const cat = e.category || 'Другое';
+      if (!categoryMap[cat]) categoryMap[cat] = 0;
+      categoryMap[cat] += e.amount || 0;
+    });
+    const catLabels = Object.keys(categoryMap);
+    const catValues = catLabels.map(l => categoryMap[l]);
+    const colors = [
+      'rgba(56,189,248,0.7)',
+      'rgba(251,146,60,0.8)',
+      'rgba(52,211,153,0.8)',
+      'rgba(248,113,113,0.85)',
+      'rgba(196,181,253,0.85)',
+      'rgba(248,250,252,0.75)',
+      'rgba(96,165,250,0.75)',
+      'rgba(251,191,36,0.8)'
+    ];
+
+    chartCategory = new Chart(chartCategoryEl, {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catValues,
+          backgroundColor: catLabels.map((_,i)=>colors[i % colors.length]),
+          borderWidth: 1,
+          borderColor: '#020617'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, labels: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Аналитика — цифры + текст
+  function renderAnalytics() {
+    const monthKey = getActiveMonthKey();
+    const stats = calcPlanStats(monthKey);
+    const expensesMonth = state.expenses.filter(e => e.date && e.date.startsWith(monthKey));
+    if (!stats.budget && !expensesMonth.length) {
+      statPlanVsFact.textContent = '—';
+      statAvgPerDay.textContent = '—';
+      statForecast.textContent = '—';
+      aiSummaryText.textContent = 'Укажи бюджет и добавь хотя бы несколько трат за месяц — тогда здесь появится разбор по бюджету и динамике расходов.';
+      return;
+    }
+
+    const spentVariable = expensesMonth.reduce((s,e)=>s+(e.amount||0),0);
+    const totalSpent = spentVariable + stats.fixedSum;
+    const delta = stats.budget ? stats.budget - totalSpent : null;
+    statPlanVsFact.textContent = stats.budget ? formatMoneyWithSign(delta) : '—';
+
+    const days = stats.days;
+    if (days <= 0) {
+      statAvgPerDay.textContent = '—';
+      statForecast.textContent = '—';
+      aiSummaryText.textContent = 'Похоже, что выбран некорректный месяц. Попробуй выбрать другой месяц.';
+      return;
+    }
+
+    const [yearStr, monthStr] = monthKey.split('-');
+    const now = new Date();
+    let daysPassed;
+    if (now.getFullYear() === parseInt(yearStr,10) && (now.getMonth()+1) === parseInt(monthStr,10)) {
+      daysPassed = now.getDate();
+      if (daysPassed > days) daysPassed = days;
+    } else {
+      // если месяц в прошлом или будущем — считаем, что прошёл весь месяц
+      daysPassed = days;
+    }
+
+    const avgPerDay = daysPassed > 0 ? spentVariable / daysPassed : 0;
+    const forecastVariable = avgPerDay * days;
+    const forecastTotal = forecastVariable + stats.fixedSum;
+
+    statAvgPerDay.textContent = spentVariable ? formatMoney(avgPerDay) : '—';
+    statForecast.textContent = stats.budget ? formatMoney(forecastTotal) : formatMoney(forecastTotal);
+
+    // Текстовый "ИИ"-разбор
+    let text = '';
+    text += `Выбран месяц ${monthKey}. Плановый бюджет: ${stats.budget ? formatMoney(stats.budget) : 'не задан'}.\n\n`;
+
+    if (stats.budget) {
+      text += `Фиксированные расходы: ${formatMoney(stats.fixedSum)}. На переменные траты остаётся примерно ${formatMoney(stats.variable)}.\n`;
+      text += `Равномерный дневной лимит: ${stats.dailyLimit ? formatMoney(stats.dailyLimit) : '—'}.\n\n`;
+    }
+
+    if (expensesMonth.length) {
+      text += `За этот месяц уже потрачено на переменные расходы: ${formatMoney(spentVariable)} (без учёта фиксированных).\n`;
+      text += `Средний расход в день: ${avgPerDay ? formatMoney(avgPerDay) : '—'}.\n`;
+      text += `Если продолжать в том же темпе, к концу месяца будет потрачено примерно ${formatMoney(forecastTotal)} (включая фиксированные).\n\n`;
+
+      if (stats.budget) {
+        if (forecastTotal > stats.budget * 1.05) {
+          text += '❗ При текущем темпе расходов есть высокий риск выйти за рамки бюджета. Можно либо снизить ежедневный лимит, либо пересмотреть крупные покупки.\n';
+        } else if (forecastTotal < stats.budget * 0.9) {
+          text += '✅ При текущем темпе ты, вероятно, уложишься в бюджет с запасом. Это хороший знак: можно либо немного увеличить комфорт, либо ускорить накопления.\n';
+        } else {
+          text += 'ℹ️ Траты примерно соответствуют плану. Важно лишь не увеличивать темп ближе к концу месяца.\n';
+        }
+
+        const categoryMap = {};
+        expensesMonth.forEach(e => {
+          const cat = e.category || 'Другое';
+          if (!categoryMap[cat]) categoryMap[cat] = 0;
+          categoryMap[cat] += e.amount || 0;
+        });
+        const sortedCats = Object.entries(categoryMap).sort((a,b)=>b[1]-a[1]);
+        if (sortedCats.length) {
+          const topCats = sortedCats.slice(0,3).map(([cat,val])=>`${cat} (${formatMoney(val)})`).join(', ');
+          text += `\nТоп категорий по расходам: ${topCats}. Именно туда утекает основной объём бюджета.`;
+        }
+      }
+    } else {
+      text += 'За этот месяц ещё нет трат. Как только ты начнёшь вносить расходы, здесь появится динамика и прогноз.';
+    }
+
+    aiSummaryText.textContent = text;
+  }
+
+  // Экспорт / импорт
+  btnExportJson.addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'regular_expenses_backup.json';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  importFileInput.addEventListener('change', () => {
+    const file = importFileInput.files && importFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== 'object') throw new Error('Некорректный JSON.');
+        if (!Array.isArray(data.expenses)) throw new Error('Не найден массив expenses.');
+        let merge = false;
+        if (state.expenses.length || Object.keys(state.plans).length) {
+          merge = confirm('У тебя уже есть данные. OK — объединить с импортируемыми, Cancel — заменить.');
+        }
+        if (!merge) {
+          state = {
+            categories: state.categories.slice(),
+            plans: {},
+            expenses: []
+          };
+        }
+        if (Array.isArray(data.categories)) {
+          data.categories.forEach(c => {
+            if (!state.categories.includes(c)) state.categories.push(c);
+          });
+        }
+        if (data.plans && typeof data.plans === 'object') {
+          Object.entries(data.plans).forEach(([k,v]) => {
+            state.plans[k] = v;
+          });
+        }
+        data.expenses.forEach(e => {
+          if (!e.id) e.id = Date.now() + '_' + Math.random().toString(16).slice(2);
+          state.expenses.push(e);
+        });
+        saveState();
+        renderAll();
+        alert('Импорт успешно завершён.');
+      } catch (e) {
+        console.error(e);
+        alert('Ошибка импорта JSON: ' + e.message);
+      } finally {
+        importFileInput.value = '';
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  function renderAll() {
+    renderCategorySelects();
+    onMonthChange();
+  }
+
+  // Инициализация
+  loadState();
+  setCurrentMonthValue();
+  setExpenseDateToday();
+  renderAll();
+</script>
+</body>
+</html>
