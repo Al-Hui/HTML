@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Ккал-калькулятор с AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Иконка для iPhone / иконка сайта -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" href="icon.png">
+  <meta name="apple-mobile-web-app-title" content="КкалAI">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-card: #020617;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --blue: #38bdf8;
+      --blue-soft: rgba(56,189,248,0.15);
+      --orange: #fb923c;
+      --orange-soft: rgba(251,146,60,0.18);
+      --border: #1f2937;
+      --danger: #f97373;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --shadow: 0 18px 40px rgba(15,23,42,0.9);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      background:
+        radial-gradient(circle at top, #0b1120 0, #020617 45%, #020617 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      color: var(--text);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1000px;
+      background:
+        radial-gradient(circle at top left, rgba(56,189,248,0.16), transparent 55%),
+        radial-gradient(circle at top right, rgba(251,146,60,0.16), transparent 60%),
+        var(--bg-card);
+      border-radius: 26px;
+      border: 1px solid rgba(148,163,184,0.6);
+      box-shadow: var(--shadow);
+      padding: 18px 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .title span.icon {
+      font-size: 26px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+    .pill {
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.7);
+      padding: 3px 8px;
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(15,23,42,0.92);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pill b { color: var(--blue); }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(90deg,var(--blue),var(--orange));
+      color: #f9fafb;
+      box-shadow: 0 14px 30px rgba(37,99,235,0.7);
+      border: none;
+    }
+    .btn-secondary {
+      background: rgba(15,23,42,0.9);
+      color: var(--muted);
+      border: 1px solid rgba(148,163,184,0.7);
+    }
+    .btn-soft {
+      background: rgba(15,23,42,0.7);
+      color: var(--muted);
+      border: 1px solid rgba(55,65,81,0.9);
+    }
+    .btn-danger {
+      background: rgba(127,29,29,0.9);
+      color: #fecaca;
+      border: 1px solid rgba(248,113,113,0.8);
+    }
+    .btn-xs {
+      padding: 3px 6px;
+      font-size: 11px;
+    }
+    .btn:active {
+      transform: translateY(1px);
+      box-shadow: none;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+      border-bottom: 1px solid rgba(31,41,55,0.95);
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 7px 12px;
+      font-size: 13px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border: 1px solid rgba(56,189,248,0.7);
+    }
+    .tab-icon {
+      font-size: 15px;
+    }
+
+    .tab-content {
+      display: none;
+      margin-top: 10px;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .section {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 12px 12px 14px;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.97), #020617);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .section-title .icon {
+      font-size: 16px;
+    }
+    .section-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
+    textarea {
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(31,41,55,0.95);
+      font-size: 13px;
+      background: rgba(15,23,42,0.95);
+      color: var(--text);
+      min-width: 70px;
+    }
+    input[type="number"] {
+      width: 110px;
+    }
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    .small {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .stat-card {
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 7px 9px;
+      background: rgba(15,23,42,0.96);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .stat-value {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .stat-note {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .capture-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+      gap: 10px;
+    }
+
+    .image-box {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 10px;
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.18), transparent 60%),
+        rgba(15,23,42,0.98);
+    }
+    .image-preview {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.6);
+      margin-top: 8px;
+    }
+
+    .recent-list {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 8px 9px;
+      background: rgba(15,23,42,0.98);
+      max-height: 260px;
+      overflow: auto;
+      font-size: 12px;
+    }
+    .recent-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(31,41,55,0.9);
+    }
+    .recent-item:last-child {
+      border-bottom: none;
+    }
+    .recent-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .recent-name {
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .recent-meta {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .error {
+      font-size: 11px;
+      color: var(--danger);
+      min-height: 14px;
+      margin-top: 4px;
+    }
+
+    .table-wrap {
+      margin-top: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      overflow: auto;
+      max-height: 360px;
+      background: rgba(15,23,42,0.96);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11.5px;
+    }
+    thead {
+      background: rgba(15,23,42,0.98);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    th, td {
+      padding: 5px 6px;
+      border-bottom: 1px solid rgba(31,41,55,0.95);
+      text-align: left;
+      white-space: nowrap;
+    }
+    th {
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    tbody tr:nth-child(even) td { background: rgba(15,23,42,0.9); }
+    tbody tr:nth-child(odd) td { background: rgba(15,23,42,0.86); }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .chart-box {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      padding: 8px 10px 10px;
+      background: rgba(15,23,42,0.98);
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    canvas {
+      width: 100%;
+      height: 220px;
+    }
+
+    .ai-box {
+      margin-top: 6px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(251,146,60,0.8);
+      padding: 6px 8px;
+      background: rgba(30,64,175,0.75);
+      font-size: 12px;
+    }
+    .ai-title {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .ai-title .icon {
+      font-size: 14px;
+    }
+    .ai-text {
+      font-size: 11.5px;
+      color: #fefce8;
+      line-height: 1.5;
+    }
+
+    /* База продуктов */
+    .product-search-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 6px;
+      align-items: center;
+    }
+    .product-list {
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(31,41,55,0.95);
+      max-height: 300px;
+      overflow: auto;
+      background: rgba(15,23,42,0.98);
+      padding: 6px 6px 6px;
+      font-size: 12px;
+    }
+    .product-item {
+      padding: 4px 4px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .product-item:hover {
+      background: rgba(15,23,42,0.9);
+    }
+    .product-name {
+      font-size: 12px;
+    }
+    .product-kcal {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 14px 10px 16px;
+        border-radius: 20px;
+      }
+      .capture-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="title">
+        <span class="icon">🍱</span>
+        Ккал-калькулятор с AI
+      </div>
+      <div class="subtitle">
+        Фоткаешь еду или выбираешь из базы → считаем ккал по граммам → дневник → графики и аналитика. Всё хранится локально.
+      </div>
+      <div class="pill-row">
+        <div class="pill">Распознавание: <b>OpenAI Vision</b></div>
+        <div class="pill">База: <b>основные продукты + твои</b></div>
+        <div class="pill">Хранение: <b>localStorage</b></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+      <span class="small">Активный месяц</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="month" id="monthSelector">
+        <button class="btn-soft btn-xs" type="button" id="btnSetCurrentMonth">Сейчас</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="tab-diary">
+      <span class="tab-icon">📸</span>Дневник
+    </button>
+    <button class="tab-btn" data-tab="tab-products">
+      <span class="tab-icon">📚</span>База продуктов
+    </button>
+    <button class="tab-btn" data-tab="tab-analytics">
+      <span class="tab-icon">📊</span>Аналитика
+    </button>
+    <button class="tab-btn" data-tab="tab-settings">
+      <span class="tab-icon">⚙️</span>API / настройки
+    </button>
+  </div>
+
+  <!-- ДНЕВНИК -->
+  <div class="tab-content active" id="tab-diary">
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📸</span>
+        Добавление еды (фото + база + вручную)
+      </div>
+      <div class="section-sub">
+        1) Сфотографируй или выбери фото <br>
+        2) Нажми «Распознать с AI» или выбери из базы продуктов <br>
+        3) При необходимости поправь граммы/ккал и добавь в дневник.
+      </div>
+
+      <div class="capture-layout">
+        <!-- Фото -->
+        <div class="image-box">
+          <div class="row">
+            <label style="flex:1;">
+              Фото блюда
+              <input type="file" id="fileInput" accept="image/*" capture="environment">
+            </label>
+          </div>
+          <img id="imagePreview" class="image-preview" alt="Предпросмотр" style="display:none;">
+
+          <div class="row" style="margin-top:8px;">
+            <label>
+              Дата
+              <input type="date" id="entryDate">
+            </label>
+            <label>
+              Время
+              <input type="text" id="entryTime" placeholder="например, 08:30">
+            </label>
+          </div>
+
+          <button class="btn-primary" type="button" id="btnAnalyzeImage">
+            🤖 Распознать с AI
+          </button>
+
+          <div class="error" id="aiError"></div>
+
+          <div class="small" style="margin-top:4px;">
+            Для AI-распознавания нужен OpenAI API key (вкладка «API / настройки»).
+          </div>
+        </div>
+
+        <!-- Поля + расчёт -->
+        <div class="section" style="margin-bottom:0;">
+          <div class="section-title">
+            <span class="icon">🧮</span>
+            Информация о блюде
+          </div>
+          <div class="row">
+            <label style="flex:1;">
+              Название блюда
+              <input type="text" id="foodName" placeholder="Например: капучино, поке с курицей">
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Ккал на 100 г
+              <input type="number" id="kcalPer100" min="0" step="1" placeholder="например, 150">
+            </label>
+            <label>
+              Масса, г
+              <input type="number" id="weightGrams" min="0" step="10" placeholder="например, 250">
+            </label>
+            <label>
+              Итого ккал
+              <input type="number" id="calories" min="0" step="1" placeholder="рассчитаем">
+            </label>
+          </div>
+
+          <div class="row">
+            <label>
+              Тип приёма пищи
+              <input type="text" id="mealType" placeholder="завтрак / обед / ужин / перекус">
+            </label>
+            <label style="flex:1;">
+              Комментарий / категория
+              <input type="text" id="note" placeholder="например, фастфуд, кафе, дом">
+            </label>
+          </div>
+
+          <div class="row">
+            <button class="btn-soft btn-xs" type="button" id="btnCalcFrom100">Рассчитать ккал по 100 г</button>
+            <button class="btn-soft btn-xs" type="button" id="btnCopyToProducts">Сохранить как свой продукт</button>
+          </div>
+
+          <button class="btn-primary" type="button" id="btnAddEntry" style="width:100%;justify-content:center;margin-top:4px;">
+            ✅ Добавить в дневник
+          </button>
+
+          <div class="error" id="entryError"></div>
+
+          <div class="stats-grid" style="margin-top:8px;">
+            <div class="stat-card">
+              <div class="stat-label">Съедено сегодня</div>
+              <div class="stat-value" id="statToday">—</div>
+              <div class="stat-note">Сумма ккал по сегодняшней дате.</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Съедено за месяц</div>
+              <div class="stat-value" id="statMonthShort">—</div>
+              <div class="stat-note">Все записи текущего месяца.</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Цель на день</div>
+              <div class="stat-value" id="statTargetDay">—</div>
+              <div class="stat-note">Настраивается во вкладке «Аналитика».</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Быстрый выбор из базы -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📚</span>
+        Быстрый выбор из базы продуктов
+      </div>
+      <div class="section-sub">
+        Найди продукт, нажми — и мы подставим название и ккал на 100 г в форму выше.
+      </div>
+      <div class="product-search-row">
+        <label style="flex:1;">
+          Поиск по базе
+          <input type="text" id="quickProductSearch" placeholder="например, капучино, поке, ролл...">
+        </label>
+        <button class="btn-soft btn-xs" type="button" id="btnClearQuickSearch">Сбросить</button>
+      </div>
+      <div class="product-list" id="quickProductList"></div>
+    </div>
+
+    <!-- Последние записи -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🍽️</span>
+        Последние записи
+      </div>
+      <div class="recent-list" id="recentList"></div>
+    </div>
+  </div>
+
+  <!-- БАЗА ПРОДУКТОВ -->
+  <div class="tab-content" id="tab-products">
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📚</span>
+        База основных продуктов
+      </div>
+      <div class="section-sub">
+        Здесь готовая база + твои собственные продукты. Значения ккал на 100 г, дальше считаем по массе.
+      </div>
+
+      <div class="product-search-row">
+        <label style="flex:1;">
+          Поиск
+          <input type="text" id="productSearchInput" placeholder="капучино, рис, курица...">
+        </label>
+        <label>
+          Источник
+          <select id="productSourceFilter">
+            <option value="">Все</option>
+            <option value="base">Встроенные</option>
+            <option value="custom">Мои</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="product-list" id="productList"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">➕</span>
+        Добавить свой продукт
+      </div>
+      <div class="row">
+        <label style="flex:1;">
+          Название продукта
+          <input type="text" id="customProdName" placeholder="Например: домашний пирог">
+        </label>
+        <label>
+          Ккал на 100 г
+          <input type="number" id="customProdKcal" min="0" step="1">
+        </label>
+      </div>
+      <button class="btn-primary" type="button" id="btnAddCustomProduct">Добавить в базу</button>
+      <div class="error" id="productError"></div>
+    </div>
+  </div>
+
+  <!-- АНАЛИТИКА -->
+  <div class="tab-content" id="tab-analytics">
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🎯</span>
+        Цель и сводка
+      </div>
+      <div class="section-sub">
+        Укажи желаемую дневную норму — мы покажем, насколько ты выше/ниже цели.
+      </div>
+
+      <div class="row">
+        <label>
+          Цель ккал в день
+          <input type="number" id="targetKcalInput" min="0" step="50" placeholder="например, 2200">
+        </label>
+        <button class="btn-primary" type="button" id="btnSaveTarget">💾 Сохранить цель</button>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Всего за месяц</div>
+          <div class="stat-value" id="statTotalMonth">—</div>
+          <div class="stat-note">Сумма всех ккал за активный месяц.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Средний день</div>
+          <div class="stat-value" id="statAvgPerDay">—</div>
+          <div class="stat-note">Среднее по дням с записями.</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Максимальный день</div>
+          <div class="stat-value" id="statMaxDay">—</div>
+          <div class="stat-note">День, когда было больше всего ккал.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📊</span>
+        Графики по месяцу
+      </div>
+      <div class="section-sub">
+        Слева — суммарные ккал по дням месяца, справа — распределение по «категориям» из поля комментария.
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-box">
+          <div class="chart-title">Ккал по дням месяца</div>
+          <canvas id="chartDaily"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">Распределение по категориям</div>
+          <canvas id="chartCategory"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">🧠</span>
+        Текстовый разбор
+      </div>
+      <div class="ai-box">
+        <div class="ai-title">
+          <span class="icon">🧠</span>
+          Мини-анализ месячного питания
+        </div>
+        <div class="ai-text" id="aiSummaryText">
+          Как только накопится несколько дней с записями, здесь появится разбор: уровень калорий, «тяжёлые» дни и основные категории.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- НАСТРОЙКИ -->
+  <div class="tab-content" id="tab-settings">
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">⚙️</span>
+        API / настройки
+      </div>
+      <div class="section-sub">
+        Введи OpenAI API key и модель (vision-поддержка). <br>
+        Ключ хранится в браузере (localStorage). Для личного пользования ок, для продакшена лучше backend.
+      </div>
+
+      <div class="row">
+        <label style="flex:1;">
+          OpenAI API key
+          <input type="password" id="apiKeyInput" placeholder="sk-...">
+        </label>
+      </div>
+      <div class="row">
+        <label style="flex:1;">
+          Модель
+          <input type="text" id="modelInput" value="gpt-4.1-mini">
+        </label>
+      </div>
+
+      <div class="row">
+        <button class="btn-primary" type="button" id="btnSaveApi">💾 Сохранить API настройки</button>
+        <button class="btn-soft btn-xs" type="button" id="btnClearApi">Очистить</button>
+      </div>
+
+      <div class="small">
+        Приложение отправляет изображение как data URL в Chat Completions API и просит модель вернуть чистый JSON с названием блюда, ккал и весом.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const STORAGE_KEY = 'calorie_ai_app_v1';
+  const API_KEY_STORAGE = 'calorie_ai_api_key';
+  const MODEL_STORAGE = 'calorie_ai_model';
+  const TARGET_STORAGE = 'calorie_ai_target';
+
+  // Встроенная база продуктов (ккал на 100 г)
+  const BASE_PRODUCTS = [
+    { name: 'Капучино 250 мл', kcalPer100: 55, source: 'base' },
+    { name: 'Капучино 350 мл', kcalPer100: 55, source: 'base' },
+    { name: 'Американо без сахара', kcalPer100: 2, source: 'base' },
+    { name: 'Латте 300 мл', kcalPer100: 60, source: 'base' },
+
+    { name: 'Поке с курицей', kcalPer100: 130, source: 'base' },
+    { name: 'Поке с лососем', kcalPer100: 160, source: 'base' },
+
+    { name: 'Ролл Филадельфия', kcalPer100: 220, source: 'base' },
+    { name: 'Суши с лососем', kcalPer100: 190, source: 'base' },
+
+    { name: 'Суп Том Ям', kcalPer100: 90, source: 'base' },
+    { name: 'Сырный пирог', kcalPer100: 280, source: 'base' },
+
+    { name: 'Куриная грудка (варёная)', kcalPer100: 165, source: 'base' },
+    { name: 'Куриное филе (жареное)', kcalPer100: 210, source: 'base' },
+    { name: 'Говядина отварная', kcalPer100: 190, source: 'base' },
+    { name: 'Рис отварной', kcalPer100: 110, source: 'base' },
+    { name: 'Гречка отварная', kcalPer100: 110, source: 'base' },
+    { name: 'Макароны отварные', kcalPer100: 130, source: 'base' },
+    { name: 'Картофель отварной', kcalPer100: 80, source: 'base' },
+    { name: 'Картофель фри', kcalPer100: 320, source: 'base' },
+    { name: 'Яйцо куриное варёное', kcalPer100: 155, source: 'base' },
+    { name: 'Омлет', kcalPer100: 190, source: 'base' },
+
+    { name: 'Яблоко', kcalPer100: 50, source: 'base' },
+    { name: 'Банан', kcalPer100: 90, source: 'base' },
+    { name: 'Апельсин', kcalPer100: 45, source: 'base' },
+    { name: 'Груша', kcalPer100: 57, source: 'base' },
+
+    { name: 'Салат Цезарь', kcalPer100: 180, source: 'base' },
+    { name: 'Бургер классический', kcalPer100: 250, source: 'base' },
+    { name: 'Пицца Маргарита', kcalPer100: 220, source: 'base' },
+    { name: 'Шоколад молочный', kcalPer100: 550, source: 'base' },
+    { name: 'Мороженое пломбир', kcalPer100: 220, source: 'base' }
+  ];
+
+  let state = {
+    entries: [],       // {id,date,time,name,calories,weightGrams,kcalPer100,mealType,note}
+    customProducts: [] // {name,kcalPer100,source:'custom'}
+  };
+
+  let chartDaily = null;
+  let chartCategory = null;
+
+  // ЭЛЕМЕНТЫ
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  const monthSelector = document.getElementById('monthSelector');
+  const btnSetCurrentMonth = document.getElementById('btnSetCurrentMonth');
+
+  // Diary
+  const fileInput = document.getElementById('fileInput');
+  const imagePreview = document.getElementById('imagePreview');
+  const entryDate = document.getElementById('entryDate');
+  const entryTime = document.getElementById('entryTime');
+  const foodName = document.getElementById('foodName');
+  const kcalPer100Input = document.getElementById('kcalPer100');
+  const weightGramsInput = document.getElementById('weightGrams');
+  const caloriesInput = document.getElementById('calories');
+  const mealTypeInput = document.getElementById('mealType');
+  const noteInput = document.getElementById('note');
+  const btnAnalyzeImage = document.getElementById('btnAnalyzeImage');
+  const btnAddEntry = document.getElementById('btnAddEntry');
+  const btnCalcFrom100 = document.getElementById('btnCalcFrom100');
+  const btnCopyToProducts = document.getElementById('btnCopyToProducts');
+  const aiError = document.getElementById('aiError');
+  const entryError = document.getElementById('entryError');
+  const recentList = document.getElementById('recentList');
+  const statToday = document.getElementById('statToday');
+  const statMonthShort = document.getElementById('statMonthShort');
+  const statTargetDay = document.getElementById('statTargetDay');
+
+  const quickProductSearch = document.getElementById('quickProductSearch');
+  const btnClearQuickSearch = document.getElementById('btnClearQuickSearch');
+  const quickProductList = document.getElementById('quickProductList');
+
+  // Products
+  const productSearchInput = document.getElementById('productSearchInput');
+  const productSourceFilter = document.getElementById('productSourceFilter');
+  const productList = document.getElementById('productList');
+  const customProdName = document.getElementById('customProdName');
+  const customProdKcal = document.getElementById('customProdKcal');
+  const btnAddCustomProduct = document.getElementById('btnAddCustomProduct');
+  const productError = document.getElementById('productError');
+
+  // Analytics
+  const targetKcalInput = document.getElementById('targetKcalInput');
+  const btnSaveTarget = document.getElementById('btnSaveTarget');
+  const chartDailyEl = document.getElementById('chartDaily');
+  const chartCategoryEl = document.getElementById('chartCategory');
+  const statTotalMonth = document.getElementById('statTotalMonth');
+  const statAvgPerDay = document.getElementById('statAvgPerDay');
+  const statMaxDay = document.getElementById('statMaxDay');
+  const aiSummaryText = document.getElementById('aiSummaryText');
+
+  // Settings
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const modelInput = document.getElementById('modelInput');
+  const btnSaveApi = document.getElementById('btnSaveApi');
+  const btnClearApi = document.getElementById('btnClearApi');
+
+  // Табы
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      const id = btn.getAttribute('data-tab');
+      document.getElementById(id).classList.add('active');
+      if (id === 'tab-analytics') {
+        renderCharts();
+        renderAnalytics();
+      }
+    });
+  });
+
+  // Месяц
+  function setCurrentMonthValue() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    monthSelector.value = `${y}-${m}`;
+  }
+  btnSetCurrentMonth.addEventListener('click', () => {
+    setCurrentMonthValue();
+    onMonthChange();
+  });
+  monthSelector.addEventListener('change', onMonthChange);
+
+  function getActiveMonthKey() {
+    if (!monthSelector.value) {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      return `${y}-${m}`;
+    }
+    return monthSelector.value;
+  }
+
+  function daysInMonth(monthKey) {
+    const [yearStr, monthStr] = monthKey.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    return new Date(year, month, 0).getDate();
+  }
+
+  // LocalStorage
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.entries)) state.entries = data.entries;
+        if (Array.isArray(data.customProducts)) state.customProducts = data.customProducts;
+      }
+      const apiKey = localStorage.getItem(API_KEY_STORAGE) || '';
+      if (apiKey) apiKeyInput.value = apiKey;
+      const model = localStorage.getItem(MODEL_STORAGE) || '';
+      if (model) modelInput.value = model;
+      const target = localStorage.getItem(TARGET_STORAGE) || '';
+      if (target) targetKcalInput.value = target;
+    } catch(e) {
+      console.error('loadState error', e);
+    }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch(e) {
+      console.error('saveState error', e);
+    }
+  }
+
+  function formatNumber(v) {
+    if (v == null || isNaN(v)) return '—';
+    return v.toLocaleString('ru-RU', { maximumFractionDigits: 0 });
+  }
+
+  // Дата/время
+  function setTodayDateTime() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    entryDate.value = `${y}-${m}-${day}`;
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    entryTime.value = `${hh}:${mm}`;
+  }
+
+  // Предпросмотр изображения
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      imagePreview.style.display = 'none';
+      imagePreview.src = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.src = e.target.result;
+      imagePreview.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // API настройки
+  btnSaveApi.addEventListener('click', () => {
+    const key = apiKeyInput.value.trim();
+    const model = modelInput.value.trim();
+    localStorage.setItem(API_KEY_STORAGE, key);
+    localStorage.setItem(MODEL_STORAGE, model || 'gpt-4.1-mini');
+    alert('API настройки сохранены.');
+  });
+  btnClearApi.addEventListener('click', () => {
+    apiKeyInput.value = '';
+    modelInput.value = 'gpt-4.1-mini';
+    localStorage.removeItem(API_KEY_STORAGE);
+    localStorage.removeItem(MODEL_STORAGE);
+  });
+
+  function getApiKey() {
+    return apiKeyInput.value.trim();
+  }
+  function getModelName() {
+    return (modelInput.value || 'gpt-4.1-mini').trim();
+  }
+
+  // Цель
+  btnSaveTarget.addEventListener('click', () => {
+    const v = targetKcalInput.value.trim();
+    localStorage.setItem(TARGET_STORAGE, v || '');
+    renderTodayAndMonthStats();
+    renderAnalytics();
+    alert('Цель сохранена.');
+  });
+
+  // AI распознавание изображения
+  btnAnalyzeImage.addEventListener('click', async () => {
+    aiError.textContent = '';
+    const apiKey = getApiKey();
+    const model = getModelName();
+
+    if (!apiKey) {
+      aiError.textContent = 'Сначала введи API key во вкладке «API / настройки».';
+      return;
+    }
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) {
+      aiError.textContent = 'Выбери или сделай фото блюда.';
+      return;
+    }
+
+    try {
+      btnAnalyzeImage.disabled = true;
+      btnAnalyzeImage.textContent = 'Распознаю...';
+
+      const base64 = await fileToBase64(file); // data:...
+
+      const payload = {
+        model,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text:
+`Ты нутриционист. По фотографии оценки:
+- краткое название блюда (на русском),
+- примерная калорийность (ккал) всего блюда,
+- примерная масса блюда (граммы),
+- категория/тип (например: кофе, десерт, основное, фастфуд, салат, напиток).
+
+Ответь строго в JSON без пояснений:
+{"name":"...","calories":123,"weight_grams":250,"category":"..."}`
+              },
+              {
+                type: "image_url",
+                image_url: {
+                  url: base64 // это data URL
+                }
+              }
+            ]
+          }
+        ],
+        max_tokens: 300
+      };
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        console.error('OpenAI error:', text);
+        aiError.textContent = 'Ошибка API: ' + response.status;
+        return;
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content?.trim();
+      if (!content) {
+        aiError.textContent = 'Не удалось получить ответ от модели.';
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(content);
+      } catch(e) {
+        console.warn('Cannot parse JSON, raw content:', content);
+        aiError.textContent = 'Модель вернула ответ не в формате JSON. Попробуй ещё раз.';
+        return;
+      }
+
+      if (parsed.name) foodName.value = parsed.name;
+      if (parsed.weight_grams != null) weightGramsInput.value = Math.round(parsed.weight_grams);
+      if (parsed.calories != null) {
+        const w = parsed.weight_grams || 100;
+        const per100 = parsed.calories / (w / 100);
+        kcalPer100Input.value = Math.round(per100);
+        caloriesInput.value = Math.round(parsed.calories);
+      }
+      if (parsed.category) {
+        if (!mealTypeInput.value) mealTypeInput.value = parsed.category;
+      }
+
+    } catch(e) {
+      console.error(e);
+      aiError.textContent = 'Ошибка при обработке изображения.';
+    } finally {
+      btnAnalyzeImage.disabled = false;
+      btnAnalyzeImage.textContent = '🤖 Распознать с AI';
+    }
+  });
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Расчёт ккал по 100 г
+  btnCalcFrom100.addEventListener('click', () => {
+    const per100 = parseFloat(kcalPer100Input.value);
+    const grams = parseFloat(weightGramsInput.value);
+    if (isNaN(per100) || per100 <= 0 || isNaN(grams) || grams <= 0) {
+      entryError.textContent = 'Укажи ккал на 100 г и массу блюда.';
+      return;
+    }
+    entryError.textContent = '';
+    const total = per100 * grams / 100;
+    caloriesInput.value = Math.round(total);
+  });
+
+  // Сохранить как продукт
+  btnCopyToProducts.addEventListener('click', () => {
+    const name = foodName.value.trim();
+    const per100 = parseFloat(kcalPer100Input.value);
+    if (!name || isNaN(per100) || per100 <= 0) {
+      entryError.textContent = 'Чтобы сохранить продукт, укажи название и ккал на 100 г.';
+      return;
+    }
+    entryError.textContent = '';
+    state.customProducts.push({ name, kcalPer100: per100, source: 'custom' });
+    saveState();
+    renderProductLists();
+    alert('Продукт сохранён в базу.');
+  });
+
+  // Добавление записи в дневник
+  btnAddEntry.addEventListener('click', () => {
+    entryError.textContent = '';
+
+    const date = entryDate.value;
+    let time = (entryTime.value || '').trim();
+    const name = foodName.value.trim();
+    const per100 = parseFloat(kcalPer100Input.value);
+    const grams = parseFloat(weightGramsInput.value);
+    const kcal = parseFloat(caloriesInput.value);
+    const mealType = mealTypeInput.value.trim();
+    const note = noteInput.value.trim();
+
+    if (!date) {
+      entryError.textContent = 'Укажи дату.';
+      return;
+    }
+    if (!name) {
+      entryError.textContent = 'Название блюда не может быть пустым.';
+      return;
+    }
+
+    let finalKcal = kcal;
+    if ((isNaN(finalKcal) || finalKcal <= 0) && !isNaN(per100) && !isNaN(grams) && per100>0 && grams>0) {
+      finalKcal = per100 * grams / 100;
+    }
+    if (isNaN(finalKcal) || finalKcal <= 0) {
+      entryError.textContent = 'Укажи корректное значение ккал (или пер100+граммы).';
+      return;
+    }
+
+    if (!time) {
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      time = `${hh}:${mm}`;
+    }
+
+    state.entries.push({
+      id: Date.now() + '_' + Math.random().toString(16).slice(2),
+      date,
+      time,
+      name,
+      calories: Math.round(finalKcal),
+      weightGrams: isNaN(grams) ? null : grams,
+      kcalPer100: isNaN(per100) ? null : per100,
+      mealType,
+      note
+    });
+    saveState();
+
+    renderRecent();
+    renderTodayAndMonthStats();
+    renderJournalTable();
+    renderCharts();
+    renderAnalytics();
+  });
+
+  // Последние записи
+  function renderRecent() {
+    const monthKey = getActiveMonthKey();
+    const entries = state.entries
+      .filter(e => e.date && e.date.startsWith(monthKey))
+      .sort((a,b) => (b.date + (b.time||'')) .localeCompare(a.date + (a.time||'')));
+
+    if (!entries.length) {
+      recentList.innerHTML = '<div class="small">Пока нет записей за этот месяц.</div>';
+      return;
+    }
+
+    recentList.innerHTML = '';
+    entries.slice(0,20).forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'recent-item';
+      div.innerHTML = `
+        <div class="recent-main">
+          <div class="recent-name">${escapeHtml(e.name)}</div>
+          <div class="recent-meta">
+            ${escapeHtml(e.date)} · ${escapeHtml(e.time || '')}
+            · ${formatNumber(e.calories)} ккал
+            ${e.mealType ? (' · ' + escapeHtml(e.mealType)) : ''}
+          </div>
+        </div>
+        <button class="btn-danger btn-xs" data-id="${e.id}">✕</button>
+      `;
+      recentList.appendChild(div);
+    });
+
+    recentList.querySelectorAll('button[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        if (!confirm('Удалить эту запись?')) return;
+        state.entries = state.entries.filter(e => String(e.id) !== String(id));
+        saveState();
+        renderRecent();
+        renderTodayAndMonthStats();
+        renderJournalTable();
+        renderCharts();
+        renderAnalytics();
+      });
+    });
+  }
+
+  function renderTodayAndMonthStats() {
+    const today = entryDate.value;
+    const monthKey = getActiveMonthKey();
+    const target = parseFloat(targetKcalInput.value) || null;
+
+    const todayEntries = state.entries.filter(e => e.date === today);
+    const monthEntries = state.entries.filter(e => e.date && e.date.startsWith(monthKey));
+
+    const todayKcal = todayEntries.reduce((s,e)=>s+(e.calories||0),0);
+    const monthKcal = monthEntries.reduce((s,e)=>s+(e.calories||0),0);
+
+    statToday.textContent = todayEntries.length ? (formatNumber(todayKcal) + ' ккал') : '—';
+    statMonthShort.textContent = monthEntries.length ? (formatNumber(monthKcal) + ' ккал') : '—';
+
+    statTargetDay.textContent = target ? (formatNumber(target) + ' ккал') : '—';
+  }
+
+  // ЖУРНАЛ (использует таблицу в analytics табе? мы сделаем отдельную таблицу здесь? — у нас журнал в табе products? нет; в этой версии журнал в analytics не нужен, поэтому сделали только recent + analytics. Оставим только analytics таблицы? Чтобы не усложнять, отдельной таблицы не делаем. Но функция journal упомянута — у нас её нет. Добавим простую таблицу во вкладку analytics? Уже крупная. Лучше простую таблицу в journaling? ОК, сделаем тут: -->
+  // В этой версии журнал = вкладка "Журнал" — но мы её не добавляли отдельно.
+  // Для простоты: будем считать, что "Журнал" = таб analytics? Чтобы не ломать, создадим простую функцию-заглушку:
+  function renderJournalTable() {
+    // Можно в будущем добавить таблицу; сейчас просто ничего не делаем.
+  }
+
+  // База продуктов: рендер
+  function getAllProducts() {
+    return [...BASE_PRODUCTS, ...state.customProducts];
+  }
+
+  function renderProductLists() {
+    renderFullProductList();
+    renderQuickProductList();
+  }
+
+  function renderFullProductList() {
+    const search = (productSearchInput.value || '').toLowerCase();
+    const sourceFilter = productSourceFilter.value;
+    const products = getAllProducts().filter(p => {
+      if (sourceFilter && p.source !== sourceFilter) return false;
+      if (!search) return true;
+      return p.name.toLowerCase().includes(search);
+    }).sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+
+    if (!products.length) {
+      productList.innerHTML = '<div class="small">Ничего не найдено.</div>';
+      return;
+    }
+
+    productList.innerHTML = '';
+    products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product-item';
+      div.innerHTML = `
+        <div>
+          <div class="product-name">${escapeHtml(p.name)}</div>
+          <div class="product-kcal">${p.source === 'custom' ? 'Мой продукт · ' : ''}${p.kcalPer100} ккал / 100 г</div>
+        </div>
+        <button class="btn-soft btn-xs">В форму ↑</button>
+      `;
+      div.addEventListener('click', (ev) => {
+        if (ev.target.tagName.toLowerCase() === 'button' || ev.currentTarget === div) {
+          foodName.value = p.name;
+          kcalPer100Input.value = p.kcalPer100;
+        }
+      });
+      productList.appendChild(div);
+    });
+  }
+
+  function renderQuickProductList() {
+    const search = (quickProductSearch.value || '').toLowerCase();
+    const products = getAllProducts().filter(p => {
+      if (!search) return true;
+      return p.name.toLowerCase().includes(search);
+    }).slice(0, 30);
+
+    if (!products.length) {
+      quickProductList.innerHTML = '<div class="small">Ничего не найдено.</div>';
+      return;
+    }
+
+    quickProductList.innerHTML = '';
+    products.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'product-item';
+      div.innerHTML = `
+        <div>
+          <div class="product-name">${escapeHtml(p.name)}</div>
+          <div class="product-kcal">${p.kcalPer100} ккал / 100 г</div>
+        </div>
+      `;
+      div.addEventListener('click', () => {
+        foodName.value = p.name;
+        kcalPer100Input.value = p.kcalPer100;
+      });
+      quickProductList.appendChild(div);
+    });
+  }
+
+  productSearchInput.addEventListener('input', renderFullProductList);
+  productSourceFilter.addEventListener('change', renderFullProductList);
+  quickProductSearch.addEventListener('input', renderQuickProductList);
+  btnClearQuickSearch.addEventListener('click', () => {
+    quickProductSearch.value = '';
+    renderQuickProductList();
+  });
+
+  btnAddCustomProduct.addEventListener('click', () => {
+    const name = customProdName.value.trim();
+    const kcal = parseFloat(customProdKcal.value);
+    if (!name) {
+      productError.textContent = 'Укажи название продукта.';
+      return;
+    }
+    if (isNaN(kcal) || kcal <= 0) {
+      productError.textContent = 'Укажи корректное значение ккал на 100 г.';
+      return;
+    }
+    productError.textContent = '';
+    state.customProducts.push({ name, kcalPer100: kcal, source: 'custom' });
+    saveState();
+    customProdName.value = '';
+    customProdKcal.value = '';
+    renderProductLists();
+  });
+
+  // Чарты
+  function renderCharts() {
+    const monthKey = getActiveMonthKey();
+    const entries = state.entries.filter(e => e.date && e.date.startsWith(monthKey));
+
+    if (chartDaily) chartDaily.destroy();
+    if (chartCategory) chartCategory.destroy();
+
+    const daysCount = daysInMonth(monthKey);
+    if (!daysCount) return;
+
+    const dailyMap = new Array(daysCount).fill(0);
+    entries.forEach(e => {
+      const d = parseInt(e.date.slice(8,10),10);
+      if (!isNaN(d) && d>=1 && d<=daysCount) {
+        dailyMap[d-1] += e.calories || 0;
+      }
+    });
+    const labels = Array.from({length:daysCount}, (_,i)=>String(i+1));
+
+    chartDaily = new Chart(chartDailyEl, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Ккал',
+          data: dailyMap,
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.6)'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { font: { size: 10 } } }
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 } } },
+          y: { ticks: { font: { size: 9 } } }
+        }
+      }
+    });
+
+    const categoryMap = {};
+    entries.forEach(e => {
+      const cat = (e.note || e.mealType || 'Без категории').split(',')[0].trim() || 'Без категории';
+      if (!categoryMap[cat]) categoryMap[cat] = 0;
+      categoryMap[cat] += e.calories || 0;
+    });
+    const catLabels = Object.keys(categoryMap);
+    const catValues = catLabels.map(k => categoryMap[k]);
+    const colors = [
+      'rgba(56,189,248,0.8)',
+      'rgba(251,146,60,0.85)',
+      'rgba(52,211,153,0.85)',
+      'rgba(248,113,113,0.85)',
+      'rgba(129,140,248,0.85)',
+      'rgba(253,224,71,0.85)',
+      'rgba(248,250,252,0.85)'
+    ];
+
+    chartCategory = new Chart(chartCategoryEl, {
+      type: 'doughnut',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catValues,
+          backgroundColor: catLabels.map((_,i)=>colors[i % colors.length]),
+          borderColor: '#020617',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { labels: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // Аналитика
+  function renderAnalytics() {
+    const monthKey = getActiveMonthKey();
+    const entries = state.entries.filter(e => e.date && e.date.startsWith(monthKey));
+    if (!entries.length) {
+      statTotalMonth.textContent = '—';
+      statAvgPerDay.textContent = '—';
+      statMaxDay.textContent = '—';
+      aiSummaryText.textContent = 'Пока нет данных за этот месяц. Как только внесёшь несколько дней питания, появится мини-разбор.';
+      return;
+    }
+
+    const total = entries.reduce((s,e)=>s+(e.calories||0),0);
+
+    const dailyMap = {};
+    entries.forEach(e => {
+      if (!dailyMap[e.date]) dailyMap[e.date] = 0;
+      dailyMap[e.date] += e.calories || 0;
+    });
+    const days = Object.keys(dailyMap);
+    const avgPerDay = total / days.length;
+    let maxDay = null;
+    let maxVal = -Infinity;
+    days.forEach(d => {
+      if (dailyMap[d] > maxVal) {
+        maxVal = dailyMap[d];
+        maxDay = d;
+      }
+    });
+
+    statTotalMonth.textContent = formatNumber(total) + ' ккал';
+    statAvgPerDay.textContent = formatNumber(avgPerDay) + ' ккал';
+    statMaxDay.textContent = maxDay ? (maxDay + ' · ' + formatNumber(maxVal) + ' ккал') : '—';
+
+    const target = parseFloat(targetKcalInput.value) || null;
+
+    let text = '';
+    text += `За месяц ${monthKey} суммарно съедено около ${formatNumber(total)} ккал.\n\n`;
+    text += `Дней с записями: ${days.length}. Средняя калорийность дня: ~${formatNumber(avgPerDay)} ккал.`;
+    if (maxDay) {
+      text += `\nСамый «тяжёлый» день: ${maxDay} — примерно ${formatNumber(maxVal)} ккал.`;
+    }
+
+    if (target) {
+      const diff = avgPerDay - target;
+      if (diff > 150) {
+        text += `\n\nПо сравнению с целью в ${formatNumber(target)} ккал твой средний день выше на ~${formatNumber(diff)} ккал. Это повод чуть поджать калорийность или добавить активности.`;
+      } else if (diff < -150) {
+        text += `\n\nСредний день ниже цели на ~${formatNumber(-diff)} ккал. Если цель — не худеть слишком быстро, можно немного поднять калорийность.`;
+      } else {
+        text += `\n\nСредняя калорийность близка к цели ${formatNumber(target)} ккал — это довольно стабильный режим.`;
+      }
+    }
+
+    const categoryMap = {};
+    entries.forEach(e => {
+      const cat = (e.note || e.mealType || 'Без категории').split(',')[0].trim() || 'Без категории';
+      if (!categoryMap[cat]) categoryMap[cat] = 0;
+      categoryMap[cat] += e.calories || 0;
+    });
+    const sortedCats = Object.entries(categoryMap).sort((a,b)=>b[1]-a[1]);
+    if (sortedCats.length) {
+      const top = sortedCats.slice(0,3).map(([c,v])=>`${c} (${formatNumber(v)} ккал)`).join(', ');
+      text += `\n\nПо «категориям» больше всего калорий дают: ${top}.`;
+    }
+
+    aiSummaryText.textContent = text;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+  }
+
+  function onMonthChange() {
+    const monthKey = getActiveMonthKey();
+    if (!entryDate.value || !entryDate.value.startsWith(monthKey)) {
+      const [y,m] = monthKey.split('-');
+      const d = new Date();
+      const day = String(Math.min(d.getDate(), daysInMonth(monthKey))).padStart(2,'0');
+      entryDate.value = `${y}-${m}-${day}`;
+    }
+    renderRecent();
+    renderTodayAndMonthStats();
+    renderProductLists();
+    renderCharts();
+    renderAnalytics();
+  }
+
+  function renderAll() {
+    renderProductLists();
+    onMonthChange();
+  }
+
+  // Инициализация
+  loadState();
+  setCurrentMonthValue();
+  setTodayDateTime();
+  renderAll();
+</script>
+</body>
+</html>
