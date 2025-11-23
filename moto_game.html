@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Мото-герой — уровни сложности</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #dbeafe;
+      --panel: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: radial-gradient(circle at top, #bfdbfe 0, #dbeafe 40%, #eff6ff 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      color: var(--text);
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 760px;
+      background: var(--panel);
+      border-radius: 22px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22);
+      padding: 16px 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .score-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      font-size: 12px;
+    }
+
+    .pill span {
+      font-weight: 600;
+    }
+
+    .level-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eef2ff;
+      border: 1px solid #e5e7eb;
+      font-size: 12px;
+    }
+
+    .level-pill b {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    canvas {
+      width: 100%;
+      height: auto;
+      border-radius: 18px;
+      display: block;
+      background: linear-gradient(#bfdbfe 0 55%, #4ade80 55% 100%);
+      border: 1px solid #e5e7eb;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 14px 26px rgba(37, 99, 235, 0.6);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+      box-shadow: 0 7px 14px rgba(37, 99, 235, 0.8);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .hint b {
+      color: var(--accent);
+    }
+
+    .msg {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+      min-height: 16px;
+    }
+
+    @media (max-width: 520px) {
+      .wrap {
+        padding: 14px 10px 14px;
+        border-radius: 18px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h2>Мото-герой 🏍</h2>
+  <div class="subtitle">
+    Начни с простого уровня и прокачайся до «Суперскорости»! Герой на спортивном мотоцикле может сделать <b>до 3 прыжков подряд</b>.
+  </div>
+
+  <div class="row">
+    <div class="score-group">
+      <div class="pill">Очки: <span id="score">0</span></div>
+      <div class="pill">Рекорд: <span id="best">0</span></div>
+    </div>
+    <div class="level-pill">
+      Уровень: <b id="levelName">Очень легко</b>
+    </div>
+  </div>
+
+  <canvas id="game" width="640" height="260"></canvas>
+
+  <div class="controls">
+    <button class="btn btn-primary" id="startBtn">▶ Начать игру</button>
+    <div class="hint">Управление: <b>Пробел</b> или <b>тап по экрану</b> — прыжок (до 3 раз подряд).</div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+</div>
+
+<script>
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+
+  const scoreEl = document.getElementById("score");
+  const bestEl = document.getElementById("best");
+  const levelNameEl = document.getElementById("levelName");
+  const msgEl = document.getElementById("msg");
+  const startBtn = document.getElementById("startBtn");
+
+  // Уровни сложности по набранным очкам
+  const LEVELS = [
+    { name: "Очень легко",   minScore: 0,   baseSpeed: 3.0,  obsInterval: 130, starInterval: 90 },
+    { name: "Легко",         minScore: 25,  baseSpeed: 3.4,  obsInterval: 115, starInterval: 80 },
+    { name: "Нормально",     minScore: 60,  baseSpeed: 3.9,  obsInterval: 100, starInterval: 75 },
+    { name: "Быстро",        minScore: 120, baseSpeed: 4.5,  obsInterval: 90,  starInterval: 70 },
+    { name: "Суперскорость", minScore: 200, baseSpeed: 5.2,  obsInterval: 80,  starInterval: 65 }
+  ];
+
+  let currentLevel = LEVELS[0];
+
+  let running = false;
+  let gameOver = false;
+
+  let score = 0;
+  let best = Number(localStorage.getItem("moto_best")) || 0;
+  bestEl.textContent = best;
+
+  let speed = currentLevel.baseSpeed;
+  const gravity = 0.55;
+  const jumpForce = -11.5;
+  const maxJumps = 3;
+  let jumpCount = 0;
+
+  const groundY = canvas.height - 52;
+
+  const player = {
+    x: 70,
+    y: groundY - 40,
+    w: 60,
+    h: 40,
+    vy: 0
+  };
+
+  const obstacles = [];
+  const stars = [];
+
+  let obsTimer = 0;
+  let starTimer = 0;
+
+  // ==== УРОВНИ ====
+
+  function updateLevelByScore() {
+    let newLevel = currentLevel;
+    for (const lvl of LEVELS) {
+      if (score >= lvl.minScore) {
+        newLevel = lvl;
+      }
+    }
+    if (newLevel !== currentLevel) {
+      currentLevel = newLevel;
+      msgEl.textContent = `Новый уровень: ${currentLevel.name}!`;
+    }
+    levelNameEl.textContent = currentLevel.name;
+    // Базовая скорость уровня + чуть-чуть от очков
+    speed = currentLevel.baseSpeed + score * 0.005;
+  }
+
+  // ==== ИНИЦИАЛИЗАЦИЯ ====
+
+  function resetGame() {
+    running = false;
+    gameOver = false;
+    score = 0;
+    currentLevel = LEVELS[0];
+    speed = currentLevel.baseSpeed;
+    jumpCount = 0;
+    obstacles.length = 0;
+    stars.length = 0;
+    obsTimer = 40;
+    starTimer = 60;
+    player.y = groundY - player.h;
+    player.vy = 0;
+    scoreEl.textContent = score;
+    levelNameEl.textContent = currentLevel.name;
+    msgEl.textContent = "Нажми «Начать игру» или пробел, чтобы стартовать.";
+    draw();
+  }
+
+  // ==== СПАВН ====
+
+  function spawnObstacle() {
+    // разные типы препятствий
+    const type = Math.random();
+    let w, h;
+    if (type < 0.4) {
+      // тумба
+      w = 26 + Math.random() * 14;
+      h = 20 + Math.random() * 18;
+    } else if (type < 0.8) {
+      // барьер
+      w = 40 + Math.random() * 14;
+      h = 18 + Math.random() * 10;
+    } else {
+      // шины (широкие, низкие)
+      w = 32 + Math.random() * 10;
+      h = 16 + Math.random() * 6;
+    }
+
+    obstacles.push({
+      x: canvas.width + 10,
+      y: groundY - h,
+      w,
+      h
+    });
+  }
+
+  function spawnStar() {
+    const minY = groundY - 90;
+    const maxY = groundY - 40;
+    const y = minY + Math.random() * (maxY - minY);
+
+    stars.push({
+      x: canvas.width + 10,
+      y,
+      r: 10,
+      taken: false
+    });
+  }
+
+  // ==== УПРАВЛЕНИЕ ====
+
+  function jump() {
+    if (gameOver) return;
+    if (!running) {
+      running = true;
+      msgEl.textContent = "Прыгай через препятствия и собирай звёзды ⭐";
+      return;
+    }
+    if (jumpCount < maxJumps) {
+      player.vy = jumpForce;
+      jumpCount++;
+    }
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+      e.preventDefault();
+      if (gameOver) {
+        resetGame();
+        running = true;
+        msgEl.textContent = "Новая попытка! Жми, чтобы прыгать.";
+      } else {
+        jump();
+      }
+    }
+  });
+
+  canvas.addEventListener("pointerdown", () => {
+    if (gameOver) {
+      resetGame();
+      running = true;
+      msgEl.textContent = "Новая попытка! Жми, чтобы прыгать.";
+    } else {
+      jump();
+    }
+  });
+
+  startBtn.addEventListener("click", () => {
+    if (gameOver) {
+      resetGame();
+      running = true;
+      msgEl.textContent = "Новая попытка! Жми, чтобы прыгать.";
+    } else {
+      running = true;
+      msgEl.textContent = "Прыгай через препятствия и собирай звёзды ⭐";
+    }
+  });
+
+  // ==== ОБНОВЛЕНИЕ ====
+
+  function update() {
+    if (!running) {
+      requestAnimationFrame(update);
+      return;
+    }
+
+    // гравитация
+    player.vy += gravity;
+    player.y += player.vy;
+
+    if (player.y >= groundY - player.h) {
+      player.y = groundY - player.h;
+      player.vy = 0;
+      jumpCount = 0;
+    }
+
+    // обновляем таймеры спавна с учётом уровня
+    obsTimer--;
+    starTimer--;
+
+    if (obsTimer <= 0) {
+      spawnObstacle();
+      const base = currentLevel.obsInterval;
+      obsTimer = base + (Math.random() * 25 - 12); // небольшая рандомизация
+      if (obsTimer < 60) obsTimer = 60;
+    }
+
+    if (starTimer <= 0) {
+      spawnStar();
+      const baseS = currentLevel.starInterval;
+      starTimer = baseS + (Math.random() * 30 - 10);
+      if (starTimer < 50) starTimer = 50;
+    }
+
+    // движение
+    obstacles.forEach(o => o.x -= speed);
+    stars.forEach(s => s.x -= speed * 0.9);
+
+    // удаляем ушедшие объекты
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+      if (obstacles[i].x + obstacles[i].w < 0) {
+        obstacles.splice(i, 1);
+        // даём очки за успешно пройденное препятствие
+        score += 2;
+      }
+    }
+
+    for (let i = stars.length - 1; i >= 0; i--) {
+      if (stars[i].x + stars[i].r < 0 || stars[i].taken) {
+        stars.splice(i, 1);
+      }
+    }
+
+    // столкновения
+    for (const o of obstacles) {
+      if (rectsCollide(player, o)) {
+        onGameOver();
+        break;
+      }
+    }
+
+    // сбор звёзд
+    for (const s of stars) {
+      if (!s.taken && circleRectCollide(s.x, s.y, s.r, player)) {
+        s.taken = true;
+        score += 5;
+      }
+    }
+
+    // обновляем уровень и скорость
+    updateLevelByScore();
+
+    scoreEl.textContent = score;
+
+    draw();
+    requestAnimationFrame(update);
+  }
+
+  function onGameOver() {
+    running = false;
+    gameOver = true;
+    msgEl.textContent = "Игра окончена. Нажми «Начать игру» или пробел, чтобы попробовать снова.";
+
+    if (score > best) {
+      best = score;
+      localStorage.setItem("moto_best", best);
+      bestEl.textContent = best;
+      msgEl.textContent += " Новый рекорд! 🎉";
+    }
+  }
+
+  // ==== МАТЕМАТИКА СТОЛКНОВЕНИЙ ====
+
+  function rectsCollide(a, b) {
+    return (
+      a.x < b.x + b.w &&
+      a.x + a.w > b.x &&
+      a.y < b.y + b.h &&
+      a.y + a.h > b.y
+    );
+  }
+
+  function circleRectCollide(cx, cy, cr, rect) {
+    const testX = Math.max(rect.x, Math.min(cx, rect.x + rect.w));
+    const testY = Math.max(rect.y, Math.min(cy, rect.y + rect.h));
+    const dx = cx - testX;
+    const dy = cy - testY;
+    return dx * dx + dy * dy <= cr * cr;
+  }
+
+  // ==== ОТРИСОВКА ====
+
+  function drawBackground() {
+    // небо
+    const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    sky.addColorStop(0, "#bfdbfe");
+    sky.addColorStop(0.6, "#93c5fd");
+    sky.addColorStop(1, "#4ade80");
+    ctx.fillStyle = sky;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // дальние холмы
+    ctx.fillStyle = "#60a5fa";
+    ctx.beginPath();
+    ctx.moveTo(0, groundY - 40);
+    ctx.quadraticCurveTo(canvas.width * 0.25, groundY - 80, canvas.width * 0.5, groundY - 40);
+    ctx.quadraticCurveTo(canvas.width * 0.75, groundY, canvas.width, groundY - 30);
+    ctx.lineTo(canvas.width, groundY);
+    ctx.lineTo(0, groundY);
+    ctx.closePath();
+    ctx.fill();
+
+    // дорога
+    ctx.fillStyle = "#1f2937";
+    ctx.fillRect(0, groundY + 8, canvas.width, canvas.height - groundY - 8);
+
+    // разметка
+    ctx.strokeStyle = "#e5e7eb";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([18, 14]);
+    ctx.beginPath();
+    ctx.moveTo(0, groundY + 24);
+    ctx.lineTo(canvas.width, groundY + 24);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function drawStar(x, y, r) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 2);
+    ctx.beginPath();
+    const spikes = 5;
+    const outerRadius = r;
+    const innerRadius = r / 2.4;
+    for (let i = 0; i < spikes * 2; i++) {
+      const angle = (Math.PI * i) / spikes;
+      const radius = i % 2 === 0 ? outerRadius : innerRadius;
+      ctx.lineTo(Math.cos(angle) * radius, Math.sin(angle) * radius);
+    }
+    ctx.closePath();
+    ctx.fillStyle = "#facc15";
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawObstacle(o) {
+    ctx.fillStyle = "#ef4444";
+    ctx.beginPath();
+    ctx.roundRect(o.x, o.y, o.w, o.h, 6);
+    ctx.fill();
+
+    // небольшие детали
+    ctx.fillStyle = "#fee2e2";
+    ctx.fillRect(o.x + 4, o.y + 4, o.w - 8, 4);
+  }
+
+  function drawMotoRider(p) {
+    // Тень под мотоциклом
+    ctx.fillStyle = "rgba(15,23,42,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(p.x + p.w / 2, p.y + p.h + 10, p.w / 2.6, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Координата базы мотоцикла
+    const baseY = p.y + p.h - 8;
+
+    // Заднее колесо
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.arc(p.x + 12, baseY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.beginPath();
+    ctx.arc(p.x + 12, baseY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Переднее колесо
+    ctx.fillStyle = "#111827";
+    ctx.beginPath();
+    ctx.arc(p.x + p.w - 10, baseY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#e5e7eb";
+    ctx.beginPath();
+    ctx.arc(p.x + p.w - 10, baseY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Корпус мотоцикла (спортивный)
+    ctx.fillStyle = "#1d4ed8";
+    ctx.beginPath();
+    ctx.moveTo(p.x + 8, baseY - 4);
+    ctx.lineTo(p.x + p.w / 2 - 6, baseY - 18);
+    ctx.lineTo(p.x + p.w - 4, baseY - 10);
+    ctx.lineTo(p.x + p.w - 14, baseY);
+    ctx.lineTo(p.x + 20, baseY + 2);
+    ctx.closePath();
+    ctx.fill();
+
+    // Сиденье
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(p.x + p.w / 2 - 6, baseY - 20, 20, 6);
+
+    // Руль
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(p.x + p.w - 16, baseY - 14);
+    ctx.lineTo(p.x + p.w - 4, baseY - 20);
+    ctx.stroke();
+
+    // Мальчик (гонщик)
+    const headX = p.x + p.w / 2;
+    const headY = baseY - 32;
+
+    // шлем
+    ctx.fillStyle = "#f97316";
+    ctx.beginPath();
+    ctx.arc(headX, headY, 10, 0, Math.PI * 2);
+    ctx.fill();
+    // визор
+    ctx.fillStyle = "#e5e7eb";
+    ctx.beginPath();
+    ctx.arc(headX + 2, headY + 2, 6, 0.2 * Math.PI, 0.9 * Math.PI);
+    ctx.fill();
+
+    // туловище
+    ctx.fillStyle = "#0f172a";
+    ctx.fillRect(headX - 6, headY + 8, 12, 14);
+
+    // рука
+    ctx.strokeStyle = "#0f172a";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(headX + 2, headY + 10);
+    ctx.lineTo(p.x + p.w - 10, baseY - 16);
+    ctx.stroke();
+
+    // ноги
+    ctx.beginPath();
+    ctx.moveTo(headX - 4, headY + 22);
+    ctx.lineTo(p.x + 18, baseY - 4);
+    ctx.moveTo(headX + 4, headY + 22);
+    ctx.lineTo(p.x + 26, baseY - 2);
+    ctx.stroke();
+  }
+
+  function draw() {
+    drawBackground();
+
+    // звёзды
+    for (const s of stars) {
+      drawStar(s.x, s.y, s.r);
+    }
+
+    // препятствия
+    for (const o of obstacles) {
+      drawObstacle(o);
+    }
+
+    // мотоциклист
+    drawMotoRider(player);
+
+    if (!running && !gameOver) {
+      ctx.fillStyle = "rgba(15,23,42,0.25)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 20px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("Нажми пробел или тап, чтобы начать", canvas.width / 2, canvas.height / 2 - 4);
+      ctx.font = "14px system-ui";
+      ctx.fillText("Прыжок до 3 раз подряд. Начни с лёгкого уровня!", canvas.width / 2, canvas.height / 2 + 20);
+    }
+
+    if (gameOver) {
+      ctx.fillStyle = "rgba(15,23,42,0.35)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 22px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("Игра окончена", canvas.width / 2, canvas.height / 2 - 8);
+      ctx.font = "14px system-ui";
+      ctx.fillText("Нажми «Начать игру» или пробел, чтобы попробовать ещё раз", canvas.width / 2, canvas.height / 2 + 18);
+    }
+  }
+
+  // ==== СТАРТ ====
+
+  resetGame();
+  requestAnimationFrame(update);
+</script>
+</body>
+</html>
