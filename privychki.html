@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Трекер привычек</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+/* ===== СТИЛИ: сине-оранжевая тема ===== */
+
+:root {
+  --bg: #020617;
+  --bg-card: #0f172a;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #38bdf8;
+  --orange: #fb923c;
+  --border: rgba(255,255,255,0.08);
+  --radius: 14px;
+  --shadow: 0 18px 40px rgba(0,0,0,0.5);
+}
+
+body {
+  background: radial-gradient(circle at top, #0b1120, #020617 70%);
+  margin: 0;
+  padding: 18px;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 1050px;
+  background:
+    radial-gradient(circle at top left, rgba(56,189,248,0.12), transparent 60%),
+    radial-gradient(circle at top right, rgba(251,146,60,0.12), transparent 60%),
+    var(--bg-card);
+  padding: 20px;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+/* Заголовок */
+.title {
+  font-size: 23px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.subtitle {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Кнопки */
+.btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  font-size: 13px;
+}
+.btn-primary {
+  background: linear-gradient(90deg, var(--blue), var(--orange));
+  border: none;
+  color: white;
+  box-shadow: 0 8px 20px rgba(56,189,248,0.5);
+}
+
+/* Input */
+input, select {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: var(--radius);
+  padding: 7px;
+  color: var(--text);
+}
+
+.section {
+  margin-top: 18px;
+  padding: 14px;
+  background: #0f172a;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 16px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+/* Таблица привычек */
+.habit-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.habit-name {
+  font-size: 14px;
+}
+.progress-bar {
+  height: 10px;
+  width: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e293b;
+}
+.progress-fill {
+  height: 10px;
+  background: var(--blue);
+}
+
+/* Календарь */
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 14px;
+}
+.day {
+  padding: 8px;
+  text-align: center;
+  background: #1e293b;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.day.done {
+  background: var(--orange);
+  color: black;
+}
+
+/* Chart box */
+.chart-box {
+  background: #0f172a;
+  border-radius: 18px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  margin-top: 20px;
+}
+canvas {
+  width: 100%;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="title">🔥 Трекер привычек</div>
+  <div class="subtitle">Отмечай прогресс каждый день и наблюдай, как растёт дисциплина</div>
+
+  <!-- Добавление привычки -->
+  <div class="section">
+    <div class="section-title">➕ Добавить привычку</div>
+
+    <input id="habitName" placeholder="Например: зарядка, утренняя прогулка" style="width:60%">
+    <button class="btn-primary" onclick="addHabit()">Добавить</button>
+
+    <div id="habitError" style="color:#fb7185;font-size:12px;margin-top:4px;"></div>
+  </div>
+
+  <!-- Список привычек -->
+  <div class="section">
+    <div class="section-title">📋 Список привычек</div>
+    <div id="habitList"></div>
+  </div>
+
+  <!-- Календарь выполнения -->
+  <div class="section">
+    <div class="section-title">📅 Календарь месяца</div>
+    <select id="habitSelector"></select>
+    <div id="calendar" class="calendar"></div>
+  </div>
+
+  <!-- Графики -->
+  <div class="chart-box">
+    <div class="section-title">📈 График выполнения</div>
+    <canvas id="habitChart"></canvas>
+  </div>
+
+  <!-- Экспорт -->
+  <div class="section">
+    <div class="section-title">📤 Экспорт / импорт данных</div>
+    <button class="btn" onclick="exportData()">Экспорт JSON</button>
+    <label class="btn" style="cursor:pointer;">
+      Импорт JSON
+      <input type="file" id="importInput" style="display:none">
+    </label>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* ===== STATE ===== */
+const STORAGE_KEY = "habits_v1";
+let state = {
+  habits: [] // {id, name, progress:{'YYYY-MM-DD':true}}
+};
+
+loadState();
+
+/* ===== РЕНДЕР ПРИВЫЧЕК ===== */
+function renderHabits() {
+  const list = document.getElementById("habitList");
+  const selector = document.getElementById("habitSelector");
+  list.innerHTML = "";
+  selector.innerHTML = "";
+
+  if (state.habits.length === 0) {
+    list.innerHTML = "<div style='color:#94a3b8;'>Пока нет привычек</div>";
+    return;
+  }
+
+  state.habits.forEach(h => {
+    // прогресс за месяц
+    const days = Object.values(h.progress).filter(v => v).length;
+    const totalDays = 30;
+    const percent = Math.round((days / totalDays) * 100);
+
+    list.innerHTML += `
+      <div class="habit-row">
+        <div class="habit-name">${h.name}</div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${percent}%"></div>
+        </div>
+      </div>
+    `;
+
+    selector.innerHTML += `<option value="${h.id}">${h.name}</option>`;
+  });
+
+  renderCalendar();
+  renderChart();
+}
+
+/* ===== ДОБАВИТЬ ПРИВЫЧКУ ===== */
+function addHabit() {
+  const name = document.getElementById("habitName").value.trim();
+  if (!name) {
+    document.getElementById("habitError").textContent = "Введите название!";
+    return;
+  }
+  document.getElementById("habitError").textContent = "";
+
+  state.habits.push({
+    id: Date.now(),
+    name,
+    progress: {}
+  });
+  saveState();
+  document.getElementById("habitName").value = "";
+  renderHabits();
+}
+
+/* ===== КАЛЕНДАРЬ ===== */
+function renderCalendar() {
+  const container = document.getElementById("calendar");
+  container.innerHTML = "";
+
+  const habitId = document.getElementById("habitSelector").value;
+  const habit = state.habits.find(h => h.id == habitId);
+  if (!habit) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  const days = new Date(year, month + 1, 0).getDate();
+
+  for (let d = 1; d <= days; d++) {
+    const date = `${year}-${String(month+1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const done = habit.progress[date];
+
+    const el = document.createElement("div");
+    el.className = "day" + (done ? " done" : "");
+    el.textContent = d;
+    el.onclick = () => toggleDay(habit, date);
+    container.appendChild(el);
+  }
+}
+
+/* отметить день */
+function toggleDay(habit, date) {
+  habit.progress[date] = !habit.progress[date];
+  saveState();
+  renderHabits();
+}
+
+/* ===== ГРАФИК ===== */
+let chart = null;
+
+function renderChart() {
+  const canvas = document.getElementById("habitChart");
+
+  const habitId = document.getElementById("habitSelector").value;
+  const habit = state.habits.find(h => h.id == habitId);
+  if (!habit) return;
+
+  const days = Object.keys(habit.progress).sort();
+  const values = days.map(d => habit.progress[d] ? 1 : 0);
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: days,
+      datasets: [{
+        label: 'Выполнено (1 = да)',
+        data: values,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56,189,248,0.3)',
+        tension: 0.25
+      }]
+    }
+  });
+}
+
+/* ===== LOCAL STORAGE ===== */
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function loadState() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try { state = JSON.parse(raw); }
+    catch { state = { habits: [] }; }
+  }
+}
+
+/* ===== ЭКСПОРТ / ИМПОРТ ===== */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "habits_backup.json";
+  a.click();
+}
+
+document.getElementById("importInput").onchange = function() {
+  const file = this.files[0];
+  const reader = new FileReader();
+  reader.onload = () => {
+    state = JSON.parse(reader.result);
+    saveState();
+    renderHabits();
+  };
+  reader.readAsText(file);
+};
+
+renderHabits();
+</script>
+</body>
+</html>
