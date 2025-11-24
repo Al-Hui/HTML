@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Data Risk Storyboard — корпоративная логика риска данных</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --bg-elevated: #141a32;
+      --bg-soft: #191f3a;
+      --accent: #3ddc84;
+      --accent-soft: rgba(61, 220, 132, 0.16);
+      --accent-strong: #23b862;
+      --danger: #ff4d4f;
+      --text-main: #f5f7ff;
+      --text-muted: #a4acc7;
+      --border-subtle: #262c47;
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.45);
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --transition-fast: 0.18s ease-out;
+      --chip-low: #46c2ff;
+      --chip-medium: #ffbb33;
+      --chip-high: #ff6f3c;
+      --chip-critical: #ff1744;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top left, #202852 0, #0b1020 45%, #050714 100%);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 14px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      backdrop-filter: blur(16px);
+      background: linear-gradient(90deg, rgba(8,13,32,0.95), rgba(10,18,40,0.9));
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 15px;
+      background: radial-gradient(circle at 20% 0, #81fbb8 0, #28c76f 40%, #008c5a 90%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(17, 243, 158, 0.35);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border-radius: 12px;
+      border: 1px solid rgba(8, 40, 16, 0.5);
+      background: linear-gradient(145deg, rgba(3, 18, 7, 0.3), rgba(255,255,255,0.05));
+      backdrop-filter: blur(3px);
+    }
+
+    .logo-inner {
+      position: relative;
+      width: 20px;
+      height: 20px;
+    }
+
+    .logo-inner svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .brand-text-main {
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      font-size: 17px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .brand-text-main span:first-child {
+      text-transform: uppercase;
+    }
+
+    .brand-text-main span:last-child {
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      opacity: 0.9;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(11, 219, 130, 0.08);
+      border: 1px solid rgba(61, 220, 132, 0.4);
+      color: var(--accent);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pill-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(61, 220, 132, 0.9);
+    }
+
+    .app-shell {
+      flex: 1;
+      display: flex;
+      gap: 16px;
+      padding: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .app-shell {
+        flex-direction: column;
+      }
+    }
+
+    .panel {
+      background: linear-gradient(155deg, rgba(18, 26, 56, 0.97), rgba(10, 16, 36, 0.98));
+      border-radius: var(--radius-xl);
+      padding: 16px 18px 18px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(88, 98, 164, 0.32);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .panel::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0 0, rgba(105, 255, 185, 0.04) 0, transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(75, 125, 255, 0.12) 0, transparent 60%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .panel > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .panel-left {
+      flex: 1.1;
+      min-width: 280px;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-right {
+      flex: 1.7;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #e8ecff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(81, 94, 255, 0.24);
+      border: 1px solid rgba(134, 144, 255, 0.6);
+      color: #ccd0ff;
+    }
+
+    .panel-description {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 10px;
+      margin-bottom: 10px;
+    }
+
+    @media (max-width: 640px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      background: radial-gradient(circle at 0 0, rgba(140, 146, 255, 0.1) 0, rgba(12, 16, 38, 0.95) 40%);
+      border-radius: 9px;
+      border: 1px solid var(--border-subtle);
+      padding: 7px 9px;
+      font-size: 12px;
+      color: var(--text-main);
+      outline: none;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform 0.04s ease-out;
+    }
+
+    textarea {
+      min-height: 60px;
+      resize: vertical;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: rgba(164, 172, 199, 0.65);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(61, 220, 132, 0.7);
+      box-shadow: 0 0 0 1px rgba(61, 220, 132, 0.5), 0 0 0 10px rgba(61, 220, 132, 0.08);
+      transform: translateY(-0.5px);
+    }
+
+    select {
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #aab3ff 50%),
+        linear-gradient(135deg, #aab3ff 50%, transparent 50%);
+      background-position:
+        calc(100% - 13px) 11px,
+        calc(100% - 8px) 11px;
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    .form-row-wide {
+      margin-bottom: 8px;
+    }
+
+    .form-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 6px;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0.85;
+    }
+
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.08s ease-out, box-shadow 0.12s ease-out, background-color 0.12s, opacity 0.12s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: radial-gradient(circle at 0 0, var(--accent-strong), var(--accent));
+      color: #04130a;
+      box-shadow: 0 12px 30px rgba(1, 255, 154, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 38px rgba(1, 255, 154, 0.5);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(1, 255, 154, 0.35);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid rgba(150, 159, 222, 0.7);
+      color: #d4d9ff;
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+
+    .btn-ghost:hover {
+      background: rgba(150, 159, 222, 0.15);
+    }
+
+    .btn-icon-circle {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(8, 255, 174, 0.6);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      background: radial-gradient(circle at 20% 0, rgba(130, 255, 197, 0.5), rgba(2, 43, 24, 0.9));
+      color: #04140b;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .steps-editor {
+      margin-top: 4px;
+      border-radius: 12px;
+      border: 1px dashed rgba(110, 118, 189, 0.9);
+      padding: 9px 9px 7px;
+      background: radial-gradient(circle at 0 0, rgba(134, 144, 255, 0.08), rgba(10, 14, 40, 0.96));
+    }
+
+    .steps-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      gap: 6px;
+    }
+
+    .steps-header-title {
+      font-size: 11px;
+      color: #d9ddff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .steps-header-title span {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 120px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .step-chip {
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: rgba(7, 9, 26, 0.96);
+      border: 1px solid rgba(84, 93, 193, 0.8);
+      font-size: 11px;
+      color: #e4e7ff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      white-space: nowrap;
+    }
+
+    .step-chip-main {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow: hidden;
+    }
+
+    .step-index {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid rgba(143, 152, 255, 0.8);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: #b8c2ff;
+      flex-shrink: 0;
+      background: radial-gradient(circle at 30% 0, rgba(163, 173, 255, 0.45), rgba(14, 16, 54, 0.9));
+    }
+
+    .step-text {
+      max-width: 220px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    @media (max-width: 640px) {
+      .step-text {
+        max-width: 160px;
+      }
+    }
+
+    .step-type {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(142, 151, 255, 0.18);
+      color: #c7ccff;
+      flex-shrink: 0;
+    }
+
+    .step-remove {
+      border: none;
+      background: transparent;
+      color: rgba(255, 199, 199, 0.9);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+      line-height: 1;
+      border-radius: 50%;
+      transition: background-color 0.1s ease-out, transform 0.08s ease-out;
+    }
+
+    .step-remove:hover {
+      background: rgba(255, 126, 126, 0.16);
+      transform: translateY(-0.5px);
+    }
+
+    .steps-new-row {
+      display: flex;
+      margin-top: 5px;
+      gap: 6px;
+    }
+
+    .steps-new-row input[type="text"] {
+      flex: 1.7;
+      font-size: 11px;
+    }
+
+    .steps-new-row select {
+      flex: 0.9;
+      font-size: 11px;
+    }
+
+    .steps-new-row button {
+      flex-shrink: 0;
+    }
+
+    .incidents-section {
+      margin-top: 4px;
+    }
+
+    .incidents-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+      margin-top: 6px;
+    }
+
+    .incidents-header-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #e6e9ff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-count {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(148, 158, 255, 0.2);
+      color: #cfd4ff;
+    }
+
+    .incidents-filters {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip-filter {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(120, 129, 205, 0.9);
+      background: rgba(9, 13, 34, 0.9);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+    }
+
+    .chip-filter span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .chip-filter span.dot.low {
+      background: var(--chip-low);
+    }
+
+    .chip-filter span.dot.medium {
+      background: var(--chip-medium);
+    }
+
+    .chip-filter span.dot.high {
+      background: var(--chip-high);
+    }
+
+    .chip-filter span.dot.critical {
+      background: var(--chip-critical);
+    }
+
+    .chip-filter.active {
+      background: rgba(61, 220, 132, 0.2);
+      border-color: rgba(61, 220, 132, 0.8);
+      color: var(--accent);
+    }
+
+    .incident-list {
+      border-radius: 12px;
+      border: 1px solid rgba(54, 63, 116, 0.7);
+      background: radial-gradient(circle at 0 0, rgba(151, 163, 255, 0.06), rgba(7, 10, 29, 0.98));
+      max-height: 260px;
+      overflow-y: auto;
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .incident-card {
+      border-radius: 10px;
+      padding: 7px 9px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: linear-gradient(120deg, rgba(19, 26, 66, 0.96), rgba(11, 14, 36, 0.98));
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: border-color 0.12s, background-color 0.12s, transform 0.08s;
+      position: relative;
+    }
+
+    .incident-card:hover {
+      border-color: rgba(95, 158, 255, 0.85);
+      transform: translateY(-1px);
+    }
+
+    .incident-card.active {
+      border-color: rgba(61, 220, 132, 0.9);
+      box-shadow: 0 0 0 1px rgba(61, 220, 132, 0.6);
+      background: linear-gradient(120deg, rgba(19, 31, 74, 0.98), rgba(9, 24, 32, 0.98));
+    }
+
+    .incident-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .incident-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: #f0f3ff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .incident-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 3px;
+    }
+
+    .tag {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(17, 22, 64, 0.95);
+      color: #c4c9f3;
+      border: 1px solid rgba(78, 91, 173, 0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .tag.system,
+    .tag.process,
+    .tag.it-service {
+      max-width: 140px;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .tag-risk {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .tag-risk.low {
+      border-color: rgba(70, 194, 255, 0.9);
+      color: var(--chip-low);
+    }
+
+    .tag-risk.medium {
+      border-color: rgba(255, 204, 102, 0.95);
+      color: var(--chip-medium);
+    }
+
+    .tag-risk.high {
+      border-color: rgba(255, 143, 88, 0.96);
+      color: var(--chip-high);
+    }
+
+    .tag-risk.critical {
+      border-color: rgba(255, 86, 97, 0.96);
+      color: var(--chip-critical);
+    }
+
+    .tag-date {
+      border-style: dashed;
+      border-color: rgba(125, 137, 219, 0.92);
+      color: #bdc4ff;
+    }
+
+    .tag-data {
+      border-color: rgba(61, 220, 132, 0.9);
+      background: rgba(15, 48, 33, 0.96);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .tag-not-data {
+      border-color: rgba(255, 120, 120, 0.9);
+      background: rgba(59, 11, 18, 0.96);
+      color: #ffb3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .tag-cyber {
+      border-style: dashed;
+      border-color: rgba(253, 94, 166, 0.95);
+      background: rgba(55, 7, 32, 0.98);
+      color: #ff9dd1;
+    }
+
+    .incident-empty {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 10px 4px;
+    }
+
+    .storyboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+
+    .storyboard-main-title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #e7ebff;
+    }
+
+    .storyboard-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .storyboard-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(61, 220, 132, 0.8);
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .storyboard-badge.not-data {
+      background: rgba(81, 29, 39, 0.7);
+      border-color: rgba(255, 120, 120, 0.9);
+      color: #ffb6c1;
+    }
+
+    .storyboard-badge.cyber {
+      background: rgba(84, 23, 57, 0.7);
+      border-color: rgba(253, 94, 166, 0.95);
+      color: #ffb9df;
+    }
+
+    .storyboard-container {
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(60, 69, 137, 0.9);
+      background: radial-gradient(circle at 0 0, rgba(159, 174, 255, 0.15), rgba(8, 10, 32, 0.98));
+      padding: 10px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 120px;
+    }
+
+    .storyboard-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .storyboard-title-active {
+      font-size: 13px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .storyboard-meta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .circle-divider {
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(159, 174, 255, 0.8);
+    }
+
+    .storyboard-meta-row.class-data strong {
+      color: var(--accent);
+    }
+
+    .storyboard-meta-row.class-not-data strong {
+      color: #ffb3b8;
+    }
+
+    .storyboard-meta-row.class-cyber strong {
+      color: #ff9dd1;
+    }
+
+    .storyboard-steps-scroll {
+      margin-top: 4px;
+      border-radius: 11px;
+      background: radial-gradient(circle at 0 0, rgba(119, 133, 255, 0.2), rgba(3, 5, 23, 0.95));
+      border: 1px dashed rgba(126, 140, 233, 0.9);
+      padding: 8px 6px 8px 8px;
+      overflow-x: auto;
+      scrollbar-color: rgba(134, 146, 255, 0.9) rgba(7, 9, 29, 0.95);
+      scrollbar-width: thin;
+    }
+
+    .storyboard-steps {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+      min-height: 80px;
+    }
+
+    .storyboard-step {
+      flex: 0 0 190px;
+      max-width: 220px;
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(16, 21, 58, 0.98), rgba(4, 9, 28, 0.98));
+      border: 1px solid rgba(92, 106, 220, 0.9);
+      padding: 7px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+    }
+
+    .storyboard-step::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      right: -6px;
+      width: 12px;
+      height: 1.5px;
+      background: linear-gradient(90deg, rgba(153, 167, 255, 0.3), rgba(208, 255, 205, 0.95));
+      transform: translateY(-50%);
+    }
+
+    .storyboard-step:last-child::after {
+      display: none;
+    }
+
+    .step-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: #aeb6ff;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .step-label span.index {
+      font-weight: 600;
+      color: #dde0ff;
+    }
+
+    .step-body {
+      font-size: 11px;
+      color: #f3f4ff;
+      line-height: 1.4;
+    }
+
+    .step-foot {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .step-type-pill {
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(135, 149, 255, 0.9);
+      background: rgba(26, 34, 90, 0.96);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .no-steps {
+      font-size: 11px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      padding: 16px 8px;
+    }
+
+    .no-steps-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px dashed rgba(122, 133, 214, 0.9);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      color: rgba(195, 202, 255, 0.95);
+    }
+
+    .storyboard-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--text-muted);
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge-pill {
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(126, 139, 238, 0.9);
+      background: rgba(13, 17, 48, 0.98);
+      font-size: 10px;
+      color: #ccd2ff;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .badge-pill strong {
+      color: #eef0ff;
+      font-weight: 500;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .text-danger {
+      color: var(--danger);
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo-wrap">
+      <div class="logo-inner">
+        <!-- Логотип Data Risk Storyboard (SVG) -->
+        <svg viewBox="0 0 32 32" aria-hidden="true">
+          <!-- Щит -->
+          <path d="M8 7.5L16 4l8 3.5v6.6c0 5.5-3 9.7-8 11.9-5-2.2-8-6.4-8-11.9V7.5z"
+                fill="rgba(2,12,6,0.79)" stroke="rgba(210,255,231,0.9)" stroke-width="1.2"/>
+          <!-- Линии данных -->
+          <polyline points="9.5,13.5 13,10.8 17,13 21.8,9.6"
+                    fill="none" stroke="rgba(142,255,200,0.95)" stroke-width="1.4"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="13" cy="10.8" r="0.9" fill="#81fbb8"/>
+          <circle cx="17" cy="13" r="0.9" fill="#81fbb8"/>
+          <circle cx="21.8" cy="9.6" r="0.9" fill="#81fbb8"/>
+          <!-- Буква R -->
+          <path d="M13,16h3.2c1.6,0,2.7,1,2.7,2.5c0,1.1-0.5,1.9-1.5,2.3l1.7,2.6h-1.9l-1.5-2.3h-1.3V23h-1.5V16z
+                   M16.1,19.8c0.8,0,1.3-0.4,1.3-1.2c0-0.7-0.5-1.1-1.3-1.1H14.5v2.3H16.1z"
+                fill="rgba(224,255,239,0.92)"/>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <div class="brand-text-main">
+        <span>Data Risk Storyboard</span>
+        <span>html app</span>
+      </div>
+      <div class="brand-subtitle">
+        Регистрирует риск данных только на пересечении бизнес-процесса и ИТ-услуги
+      </div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="pill">
+      <span class="pill-dot"></span>
+      <span>Локальное приложение</span>
+    </div>
+    <span>Инциденты и классификация хранятся в браузере (localStorage)</span>
+  </div>
+</header>
+
+<main class="app-shell">
+  <!-- Левая панель -->
+  <section class="panel panel-left">
+    <div class="panel-header">
+      <div class="panel-title">
+        Новый инцидент
+        <span class="panel-title-badge">Риск данных / не риск данных</span>
+      </div>
+      <button type="button" class="btn btn-ghost" id="btn-reset-form" title="Очистить форму">
+        Сбросить
+      </button>
+    </div>
+    <p class="panel-description">
+      Введи данные инцидента. Приложение автоматически определит, является ли он <strong>риском данных</strong>,
+      исходя из пересечения <strong>бизнес-процесса</strong> и <strong>ИТ-услуги, получающей плохие данные</strong>.
+      Всё, что относится к <strong>кибер/ИБ-инцидентам</strong>, помечается как «не риск данных».
+    </p>
+
+    <form id="incident-form" autocomplete="off">
+      <div class="form-grid">
+        <div class="field">
+          <label for="title">Название инцидента</label>
+          <input type="text" id="title" name="title"
+                 placeholder="Например: Дубли клиентов в витрине отчётности" required>
+        </div>
+        <div class="field">
+          <label for="businessProcess">Бизнес-процесс</label>
+          <input type="text" id="businessProcess" name="businessProcess"
+                 placeholder="Название из таблицы реестра бизнес-процессов (200 МБ)">
+        </div>
+        <div class="field">
+          <label for="itService">ИТ-услуга</label>
+          <input type="text" id="itService" name="itService"
+                 placeholder="Наименование из реестра ИТ-услуг">
+        </div>
+        <div class="field">
+          <label for="date">Дата инцидента</label>
+          <input type="date" id="date" name="date">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="riskLevel">Уровень риска</label>
+          <select id="riskLevel" name="riskLevel">
+            <option value="low">Низкий</option>
+            <option value="medium" selected>Средний</option>
+            <option value="high">Высокий</option>
+            <option value="critical">Критический</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="riskType">Тип риска</label>
+          <select id="riskType" name="riskType">
+            <option value="quality" selected>Качество данных</option>
+            <option value="availability">Доступность (перерывы, задержки)</option>
+            <option value="confidentiality">Конфиденциальность / утечка</option>
+            <option value="integrity">Целостность</option>
+            <option value="other">Другое / составной</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row-wide field">
+        <label for="cause">Причина (корневая)</label>
+        <textarea id="cause" name="cause"
+                  placeholder="Например: некорректная логика трансформации в ETL, неучтённые дубликаты, проблемы с источником..."></textarea>
+      </div>
+
+      <div class="form-row-wide field">
+        <label for="impact">Влияние / последствия</label>
+        <textarea id="impact" name="impact"
+                  placeholder="Например: искажённые KPI, некорректные управленческие решения, штрафы, переработки команды..."></textarea>
+      </div>
+
+      <div class="form-row-wide">
+        <div class="steps-editor">
+          <div class="steps-header">
+            <div class="steps-header-title">
+              Шаги сценария
+              <span>(возникновение → обнаружение → реакция → уроки)</span>
+            </div>
+            <div class="hint">
+              3–7 шагов от источника ошибки до уроков
+            </div>
+          </div>
+
+          <div id="steps-list" class="step-list"></div>
+
+          <div class="steps-new-row">
+            <input type="text" id="new-step-text"
+                   placeholder="Краткое описание шага (что произошло / кто сделал действие)">
+            <select id="new-step-type">
+              <option value="event">Событие</option>
+              <option value="control">Контроль</option>
+              <option value="failure">Отказ / пробел</option>
+              <option value="detection">Обнаружение</option>
+              <option value="reaction">Реакция</option>
+              <option value="lesson">Вывод / урок</option>
+            </select>
+            <button type="button" id="btn-add-step" class="btn btn-primary" title="Добавить шаг">
+              <span class="btn-icon-circle">+</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-footer">
+        <div class="hint">
+          Примечание: если не указан бизнес-процесс или ИТ-услуга, инцидент будет помечен как
+          <strong>«не риск данных»</strong>. Кибер/ИБ-инциденты распознаются по ключевым словам
+          (в т.ч. «кибер», «система безопасности»).
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <span class="btn-icon-circle">✓</span>
+          Сохранить инцидент
+        </button>
+      </div>
+    </form>
+
+    <div class="incidents-section">
+      <div class="incidents-header">
+        <div class="incidents-header-title">
+          Инциденты
+          <span id="incident-count" class="badge-count">0</span>
+        </div>
+        <div class="incidents-filters">
+          <button type="button" class="chip-filter active" data-risk-filter="all">Все</button>
+          <button type="button" class="chip-filter" data-risk-filter="low">
+            <span class="dot low"></span>Низкий
+          </button>
+          <button type="button" class="chip-filter" data-risk-filter="medium">
+            <span class="dot medium"></span>Средний
+          </button>
+          <button type="button" class="chip-filter" data-risk-filter="high">
+            <span class="dot high"></span>Высокий
+          </button>
+          <button type="button" class="chip-filter" data-risk-filter="critical">
+            <span class="dot critical"></span>Критический
+          </button>
+        </div>
+      </div>
+      <div id="incident-list" class="incident-list">
+        <div class="incident-empty">
+          Пока нет ни одного инцидента. Создай первый сценарий выше — он появится здесь.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Правая панель -->
+  <section class="panel panel-right">
+    <div class="storyboard-header">
+      <div>
+        <div class="storyboard-main-title">Storyboard инцидента</div>
+        <div class="storyboard-subtitle">
+          Визуализация цепочки инцидента. Если нет пересечения бизнес-процесса и ИТ-услуги
+          или инцидент кибер/ИБ — он помечается как <strong>«не риск данных»</strong>.
+        </div>
+      </div>
+      <div id="sb-badge" class="storyboard-badge">
+        DATA · INCIDENT · FLOW
+      </div>
+    </div>
+
+    <div id="storyboard-container" class="storyboard-container">
+      <div id="storyboard-empty">
+        <div class="no-steps">
+          <div class="no-steps-icon">◎</div>
+          <div>
+            Выбери инцидент слева, чтобы увидеть визуальный сценарий
+            и классификацию как «риск данных» или «не риск данных».
+          </div>
+        </div>
+      </div>
+
+      <div id="storyboard-content" class="hidden">
+        <div class="storyboard-meta">
+          <div class="storyboard-title-active" id="sb-title"></div>
+        </div>
+        <div class="storyboard-meta-row">
+          <span id="sb-bp"></span>
+          <span class="circle-divider"></span>
+          <span id="sb-it"></span>
+          <span class="circle-divider"></span>
+          <span id="sb-risk-level"></span>
+          <span class="circle-divider"></span>
+          <span id="sb-risk-type"></span>
+          <span class="circle-divider"></span>
+          <span id="sb-date"></span>
+        </div>
+
+        <div id="sb-class-row" class="storyboard-meta-row">
+          <span id="sb-class-label"></span>
+        </div>
+
+        <div class="storyboard-meta-row" style="margin-top:4px;">
+          <span><strong>Причина:</strong> <span id="sb-cause"></span></span>
+        </div>
+        <div class="storyboard-meta-row">
+          <span><strong>Влияние:</strong> <span id="sb-impact"></span></span>
+        </div>
+
+        <div class="storyboard-steps-scroll">
+          <div id="storyboard-steps" class="storyboard-steps"></div>
+        </div>
+
+        <div class="storyboard-bottom">
+          <div>
+            <span class="badge-pill">
+              Шагов: <strong id="sb-step-count">0</strong>
+            </span>
+            <span class="badge-pill">
+              Формат: <strong>разбор полётов / обучение</strong>
+            </span>
+          </div>
+          <div class="hint">
+            Логика: риск данных существует только на пересечении бизнес-процесса и ИТ-услуги,
+            использующей некорректные данные. Кибер/ИБ-инциденты выводятся отдельно.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function() {
+    const STORAGE_KEY = 'dataRiskStoryboard_incidents_v2';
+
+    let incidents = [];
+    let currentIncidentId = null;
+    let currentSteps = [];
+
+    const form = document.getElementById('incident-form');
+    const titleInput = document.getElementById('title');
+    const bpInput = document.getElementById('businessProcess');
+    const itInput = document.getElementById('itService');
+    const riskLevelSelect = document.getElementById('riskLevel');
+    const dateInput = document.getElementById('date');
+    const riskTypeSelect = document.getElementById('riskType');
+    const causeInput = document.getElementById('cause');
+    const impactInput = document.getElementById('impact');
+
+    const stepsListEl = document.getElementById('steps-list');
+    const newStepTextInput = document.getElementById('new-step-text');
+    const newStepTypeSelect = document.getElementById('new-step-type');
+    const btnAddStep = document.getElementById('btn-add-step');
+    const btnResetForm = document.getElementById('btn-reset-form');
+
+    const incidentListEl = document.getElementById('incident-list');
+    const incidentCountEl = document.getElementById('incident-count');
+    const filterButtons = document.querySelectorAll('.chip-filter');
+
+    const sbEmpty = document.getElementById('storyboard-empty');
+    const sbContent = document.getElementById('storyboard-content');
+    const sbBadge = document.getElementById('sb-badge');
+    const sbTitle = document.getElementById('sb-title');
+    const sbBp = document.getElementById('sb-bp');
+    const sbIt = document.getElementById('sb-it');
+    const sbRiskLevel = document.getElementById('sb-risk-level');
+    const sbRiskType = document.getElementById('sb-risk-type');
+    const sbDate = document.getElementById('sb-date');
+    const sbCause = document.getElementById('sb-cause');
+    const sbImpact = document.getElementById('sb-impact');
+    const sbSteps = document.getElementById('storyboard-steps');
+    const sbStepCount = document.getElementById('sb-step-count');
+    const sbClassRow = document.getElementById('sb-class-row');
+    const sbClassLabel = document.getElementById('sb-class-label');
+
+    let activeRiskFilter = 'all';
+
+    function generateId() {
+      return 'inc_' + Date.now().toString(36) + '_' + Math.random().toString(16).slice(2, 8);
+    }
+
+    function saveIncidentsToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(incidents));
+      } catch (e) {
+        console.warn('Не удалось сохранить инциденты в localStorage', e);
+      }
+    }
+
+    function loadIncidentsFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch (e) {
+        console.warn('Не удалось прочитать инциденты из localStorage', e);
+      }
+      return [];
+    }
+
+    function riskLabel(level) {
+      switch (level) {
+        case 'low': return 'Низкий';
+        case 'medium': return 'Средний';
+        case 'high': return 'Высокий';
+        case 'critical': return 'Критический';
+        default: return level || 'Не указан';
+      }
+    }
+
+    function riskTypeLabel(type) {
+      switch (type) {
+        case 'quality': return 'Качество данных';
+        case 'availability': return 'Доступность';
+        case 'confidentiality': return 'Конфиденциальность';
+        case 'integrity': return 'Целостность';
+        case 'other': return 'Другое / составной';
+        default: return 'Тип риска не указан';
+      }
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'Дата не указана';
+      try {
+        const [year, month, day] = dateStr.split('-');
+        if (!year || !month || !day) return dateStr;
+        return day + '.' + month + '.' + year;
+      } catch {
+        return dateStr;
+      }
+    }
+
+    function stepTypeLabel(type) {
+      switch (type) {
+        case 'event': return 'Событие';
+        case 'control': return 'Контроль';
+        case 'failure': return 'Отказ / пробел';
+        case 'detection': return 'Обнаружение';
+        case 'reaction': return 'Реакция';
+        case 'lesson': return 'Вывод / урок';
+        default: return 'Шаг';
+      }
+    }
+
+    function stepHint(type) {
+      switch (type) {
+        case 'event':
+          return 'Что пошло не так / какое действие запустило цепочку.';
+        case 'control':
+          return 'Контроль, который сработал или должен был сработать.';
+        case 'failure':
+          return 'Место, где контроль или процесс не сработал.';
+        case 'detection':
+          return 'Как и кем инцидент был обнаружен.';
+        case 'reaction':
+          return 'Какие действия предприняты для реагирования.';
+        case 'lesson':
+          return 'Выводы и изменения для снижения риска.';
+        default:
+          return 'Элемент цепочки инцидента.';
+      }
+    }
+
+    function detectCyberKeywords(incident) {
+      const text = [
+        incident.title || '',
+        incident.cause || '',
+        incident.impact || '',
+        incident.businessProcess || '',
+        incident.itService || '',
+        (incident.steps || []).map(s => s.text || '').join(' ')
+      ].join(' ').toLowerCase();
+
+      const keywords = [
+        'кибер', 'кибератак', 'кибербезопасност',
+        'атака', 'ddos', 'ддос',
+        'вирус', 'malware', 'малваре',
+        'фишинг', 'phishing',
+        'sql-инъек', 'sql инъек', 'sql inject',
+        'уязвимост', 'эксплойт',
+        'brute force', 'подбор парол',
+        'взлом', 'хакер',
+        'шифровальщик', 'криптолокер', 'ransomware',
+        'siem', 'waf', 'фаервол', 'firewall',
+        'система безопасности', 'система информационной безопасности',
+        'информационная безопасность', 'инфобез', 'иб-инцидент'
+      ];
+
+      return keywords.some(k => text.includes(k));
+    }
+
+    function applyClassification(incident) {
+      const hasBP = incident.businessProcess && incident.businessProcess.trim().length > 0;
+      const hasIT = incident.itService && incident.itService.trim().length > 0;
+      const isCyber = detectCyberKeywords(incident);
+
+      incident.isDataRisk = false;
+      incident.notDataRiskReason = '';
+      incident.riskCategory = 'other';
+
+      if (isCyber) {
+        incident.riskCategory = 'cyber';
+        incident.notDataRiskReason =
+          'Инцидент отнесён к кибер/ИБ-рискам (например, атаки, уязвимости, система безопасности) и не считается риском данных.';
+        return;
+      }
+
+      if (hasBP && hasIT) {
+        incident.isDataRisk = true;
+        incident.riskCategory = 'data';
+        incident.notDataRiskReason = '';
+        return;
+      }
+
+      incident.riskCategory = 'not_data';
+
+      if (!hasBP && !hasIT) {
+        incident.notDataRiskReason =
+          'Не указан ни бизнес-процесс, ни ИТ-услуга, получающая и использующая некорректные данные.';
+      } else if (!hasBP) {
+        incident.notDataRiskReason =
+          'Не указан бизнес-процесс, в рамках которого ИТ-услуга использует некорректные данные и формируются потери.';
+      } else if (!hasIT) {
+        incident.notDataRiskReason =
+          'Не указана ИТ-услуга, получающая плохие данные и использующая их в бизнес-процессе.';
+      }
+    }
+
+    function clearStepsEditor() {
+      currentSteps = [];
+      renderStepsEditor();
+    }
+
+    function renderStepsEditor() {
+      stepsListEl.innerHTML = '';
+      if (currentSteps.length === 0) {
+        const hint = document.createElement('div');
+        hint.className = 'hint';
+        hint.textContent =
+          'Добавь первый шаг сценария: источник ошибки, момент обнаружения, реакция или урок.';
+        stepsListEl.appendChild(hint);
+        return;
+      }
+
+      currentSteps.forEach((step, index) => {
+        const chip = document.createElement('div');
+        chip.className = 'step-chip';
+
+        const main = document.createElement('div');
+        main.className = 'step-chip-main';
+
+        const idx = document.createElement('div');
+        idx.className = 'step-index';
+        idx.textContent = index + 1;
+
+        const textSpan = document.createElement('div');
+        textSpan.className = 'step-text';
+        textSpan.textContent = step.text;
+
+        const typeSpan = document.createElement('div');
+        typeSpan.className = 'step-type';
+        typeSpan.textContent = stepTypeLabel(step.type);
+
+        main.appendChild(idx);
+        main.appendChild(textSpan);
+
+        chip.appendChild(main);
+        chip.appendChild(typeSpan);
+
+        const btnRemove = document.createElement('button');
+        btnRemove.type = 'button';
+        btnRemove.className = 'step-remove';
+        btnRemove.innerHTML = '&times;';
+        btnRemove.title = 'Удалить шаг';
+        btnRemove.addEventListener('click', () => {
+          currentSteps.splice(index, 1);
+          renderStepsEditor();
+        });
+
+        chip.appendChild(btnRemove);
+
+        stepsListEl.appendChild(chip);
+      });
+    }
+
+    function renderIncidentList() {
+      incidentListEl.innerHTML = '';
+      incidentCountEl.textContent = String(incidents.length);
+
+      if (incidents.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'incident-empty';
+        empty.textContent =
+          'Пока нет ни одного инцидента. Создай первый сценарий выше — он появится здесь.';
+        incidentListEl.appendChild(empty);
+        return;
+      }
+
+      const filtered = incidents.filter(inc => {
+        if (activeRiskFilter === 'all') return true;
+        return inc.riskLevel === activeRiskFilter;
+      });
+
+      if (filtered.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'incident-empty';
+        empty.textContent =
+          'Для выбранного уровня риска нет инцидентов.';
+        incidentListEl.appendChild(empty);
+        return;
+      }
+
+      filtered
+        .slice()
+        .sort((a, b) => b.createdAt - a.createdAt)
+        .forEach(incident => {
+          const card = document.createElement('div');
+          card.className = 'incident-card';
+          card.dataset.id = incident.id;
+          if (incident.id === currentIncidentId) {
+            card.classList.add('active');
+          }
+
+          const titleRow = document.createElement('div');
+          titleRow.className = 'incident-title-row';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'incident-title';
+          titleEl.textContent = incident.title || 'Инцидент без названия';
+
+          const riskTag = document.createElement('div');
+          riskTag.className = 'tag tag-risk ' + (incident.riskLevel || 'medium');
+          riskTag.textContent = riskLabel(incident.riskLevel);
+
+          titleRow.appendChild(titleEl);
+          titleRow.appendChild(riskTag);
+
+          const meta = document.createElement('div');
+          meta.className = 'incident-meta';
+
+          const bpTag = document.createElement('div');
+          bpTag.className = 'tag process';
+          bpTag.textContent = incident.businessProcess || 'БП не указан';
+
+          const itTag = document.createElement('div');
+          itTag.className = 'tag it-service';
+          itTag.textContent = incident.itService || 'ИТ-услуга не указана';
+
+          const dateTag = document.createElement('div');
+          dateTag.className = 'tag tag-date';
+          dateTag.textContent = incident.date ? formatDate(incident.date) : 'Дата не указана';
+
+          const stepsTag = document.createElement('div');
+          stepsTag.className = 'tag';
+          stepsTag.textContent = (incident.steps?.length || 0) + ' шагов';
+
+          meta.appendChild(bpTag);
+          meta.appendChild(itTag);
+          meta.appendChild(dateTag);
+          meta.appendChild(stepsTag);
+
+          // тег категории риска данных
+          const classTag = document.createElement('div');
+          classTag.className = 'tag';
+          if (incident.isDataRisk) {
+            classTag.classList.add('tag-data');
+            classTag.textContent = 'Риск данных';
+          } else if (incident.riskCategory === 'cyber') {
+            classTag.classList.add('tag-not-data', 'tag-cyber');
+            classTag.textContent = 'Киберриск (не риск данных)';
+            classTag.title = incident.notDataRiskReason || '';
+          } else {
+            classTag.classList.add('tag-not-data');
+            classTag.textContent = 'Не риск данных';
+            classTag.title = incident.notDataRiskReason || '';
+          }
+          meta.appendChild(classTag);
+
+          card.appendChild(titleRow);
+          card.appendChild(meta);
+
+          card.addEventListener('click', () => {
+            currentIncidentId = incident.id;
+            renderIncidentList();
+            renderStoryboard();
+          });
+
+          incidentListEl.appendChild(card);
+        });
+    }
+
+    function renderStoryboard() {
+      const incident = incidents.find(inc => inc.id === currentIncidentId);
+      if (!incident) {
+        sbContent.classList.add('hidden');
+        sbEmpty.classList.remove('hidden');
+        sbBadge.textContent = 'DATA · INCIDENT · FLOW';
+        sbBadge.classList.remove('not-data', 'cyber');
+        return;
+      }
+
+      sbEmpty.classList.add('hidden');
+      sbContent.classList.remove('hidden');
+
+      // бейдж и классификация
+      sbBadge.classList.remove('not-data', 'cyber');
+      sbClassRow.classList.remove('class-data', 'class-not-data', 'class-cyber');
+
+      if (incident.isDataRisk) {
+        sbBadge.textContent = 'РИСК ДАННЫХ';
+        sbClassRow.classList.add('class-data');
+        sbClassLabel.innerHTML =
+          '<strong>Риск данных.</strong> Указаны и бизнес-процесс, и ИТ-услуга, получающая и использующая некорректные данные.';
+      } else if (incident.riskCategory === 'cyber') {
+        sbBadge.textContent = 'КИБЕРРИСК · НЕ РИСК ДАННЫХ';
+        sbBadge.classList.add('cyber');
+        sbClassRow.classList.add('class-cyber');
+        sbClassLabel.innerHTML =
+          '<strong>Не риск данных.</strong> Инцидент отнесён к кибер/ИБ-рискам (например, атаки, уязвимости, система безопасности).';
+      } else {
+        sbBadge.textContent = 'НЕ РИСК ДАННЫХ';
+        sbBadge.classList.add('not-data');
+        sbClassRow.classList.add('class-not-data');
+        sbClassLabel.innerHTML =
+          '<strong>Не риск данных.</strong> ' + (incident.notDataRiskReason || 'Нет пересечения бизнес-процесса и ИТ-услуги.');
+      }
+
+      sbTitle.textContent = incident.title || 'Инцидент без названия';
+      sbBp.textContent = incident.businessProcess || 'Бизнес-процесс не указан';
+      sbIt.textContent = incident.itService || 'ИТ-услуга не указана';
+      sbRiskLevel.textContent = 'Уровень: ' + riskLabel(incident.riskLevel);
+      sbRiskType.textContent = riskTypeLabel(incident.riskType);
+      sbDate.textContent = incident.date ? formatDate(incident.date) : 'Дата не указана';
+
+      sbCause.textContent = incident.cause || 'Не описано.';
+      sbImpact.textContent = incident.impact || 'Не описано.';
+
+      const steps = incident.steps || [];
+      sbSteps.innerHTML = '';
+
+      if (steps.length === 0) {
+        const noSteps = document.createElement('div');
+        noSteps.className = 'no-steps';
+        const icon = document.createElement('div');
+        icon.className = 'no-steps-icon';
+        icon.textContent = '…';
+        const text = document.createElement('div');
+        text.innerHTML =
+          'У этого инцидента пока нет шагов. Можно добавить события, контроли, отказ, обнаружение, реакцию и уроки.';
+        noSteps.appendChild(icon);
+        noSteps.appendChild(text);
+        sbSteps.appendChild(noSteps);
+      } else {
+        steps.forEach((step, index) => {
+          const card = document.createElement('div');
+          card.className = 'storyboard-step';
+
+          const labelRow = document.createElement('div');
+          labelRow.className = 'step-label';
+
+          const left = document.createElement('span');
+          left.innerHTML = 'Шаг&nbsp;<span class="index">#' + (index + 1) + '</span>';
+
+          const right = document.createElement('span');
+          right.textContent = stepTypeLabel(step.type);
+
+          labelRow.appendChild(left);
+          labelRow.appendChild(right);
+
+          const body = document.createElement('div');
+          body.className = 'step-body';
+          body.textContent = step.text || '(пустой шаг)';
+
+          const foot = document.createElement('div');
+          foot.className = 'step-foot';
+
+          const typePill = document.createElement('div');
+          typePill.className = 'step-type-pill';
+          typePill.textContent = stepTypeLabel(step.type);
+
+          const hint = document.createElement('div');
+          hint.textContent = stepHint(step.type);
+
+          foot.appendChild(typePill);
+          foot.appendChild(hint);
+
+          card.appendChild(labelRow);
+          card.appendChild(body);
+          card.appendChild(foot);
+
+          sbSteps.appendChild(card);
+        });
+      }
+
+      sbStepCount.textContent = String(steps.length || 0);
+    }
+
+    function resetForm() {
+      form.reset();
+      riskLevelSelect.value = 'medium';
+      riskTypeSelect.value = 'quality';
+      clearStepsEditor();
+    }
+
+    btnAddStep.addEventListener('click', () => {
+      const text = newStepTextInput.value.trim();
+      const type = newStepTypeSelect.value || 'event';
+      if (!text) {
+        newStepTextInput.focus();
+        return;
+      }
+      currentSteps.push({ text, type });
+      newStepTextInput.value = '';
+      renderStepsEditor();
+      newStepTextInput.focus();
+    });
+
+    newStepTextInput.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        btnAddStep.click();
+      }
+    });
+
+    btnResetForm.addEventListener('click', () => {
+      resetForm();
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = titleInput.value.trim();
+      const businessProcess = bpInput.value.trim();
+      const itService = itInput.value.trim();
+      const riskLevel = riskLevelSelect.value;
+      const date = dateInput.value;
+      const riskType = riskTypeSelect.value;
+      const cause = causeInput.value.trim();
+      const impact = impactInput.value.trim();
+
+      if (!title) {
+        alert('Пожалуйста, заполни название инцидента.');
+        return;
+      }
+
+      const incident = {
+        id: generateId(),
+        title,
+        businessProcess,
+        itService,
+        riskLevel,
+        date,
+        riskType,
+        cause,
+        impact,
+        steps: currentSteps.slice(),
+        createdAt: Date.now()
+      };
+
+      applyClassification(incident);
+
+      incidents.push(incident);
+      saveIncidentsToStorage();
+
+      currentIncidentId = incident.id;
+      renderIncidentList();
+      renderStoryboard();
+
+      resetForm();
+    });
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeRiskFilter = btn.getAttribute('data-risk-filter') || 'all';
+        renderIncidentList();
+      });
+    });
+
+    // init
+    incidents = loadIncidentsFromStorage();
+    incidents.forEach(inc => {
+      if (typeof inc.isDataRisk === 'undefined') {
+        applyClassification(inc);
+      }
+    });
+    saveIncidentsToStorage();
+
+    renderIncidentList();
+    renderStoryboard();
+    renderStepsEditor();
+  })();
+</script>
+</body>
+</html>
