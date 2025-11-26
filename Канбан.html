@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kanban</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Иконка кабана (SVG → Base64) -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjMwMCIgdmlld0JveD0iMCAwIDUwMCA1MDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjUwMCIgaGVpZ2h0PSI1MDAiIGZpbGw9IiMzMzMiIHJ4PSIxMDAiLz4KICA8cGF0aCBkPSJNMzUwIDI2MGMwIDcwLTYwIDEyMC0xMjAgMTIwcy0xMjAtNTAtMTIwLTEyMCA2MC0xMjAgMTIwLTEyMCAxMjAgNTAgMTIwIDEyMCIgZmlsbD0iI2I3NjUwZiIvPgogIDxjaXJjbGUgY3g9IjE5MCIgY3k9IjIwMCIgcj0iMzAiIGZpbGw9IiNmZmYiLz4KICA8Y2lyY2xlIGN4PSIyNzAiIGN5PSIyMDAiIHI9IjMwIiBmaWxsPSIjZmZmIi8+CiAgPHBhdGggZD0iTTIwMCAzMDBjMCAyMCA0MCA0MCA1MCA0MHM1MC0yMCA1MC00MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIxNCIgZmlsbD0ibm9uZSIvPgo8L3N2Zz4=" />
+
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      margin: 0;
+      padding: 10px;
+      color: white;
+    }
+    h1 { text-align: center; }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .col {
+      background:#1e1e1e;
+      padding:10px;
+      border-radius:12px;
+      min-height:300px;
+    }
+
+    .task {
+      background:#333;
+      padding:8px;
+      border-radius:8px;
+      margin-bottom:8px;
+      cursor:pointer;
+    }
+
+    .task.done .title {
+      text-decoration: line-through;
+      opacity: 0.6;
+    }
+
+    .date {
+      font-size:12px;
+      opacity:0.7;
+    }
+
+    .add-box {
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      background:#000a;
+      padding:10px;
+      backdrop-filter:blur(10px);
+    }
+
+    input, select, button {
+      padding:8px;
+      border-radius:8px;
+      border:none;
+      margin:3px 0;
+    }
+
+    button {
+      background:#4a7cff;
+      color:white;
+      font-weight:bold;
+    }
+
+    @media(max-width:800px){
+      .board { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>📌 Kanban</h1>
+
+<div class="board">
+  <div class="col" id="todo"><h3>Todo</h3></div>
+  <div class="col" id="prog"><h3>In Progress</h3></div>
+  <div class="col" id="done"><h3>Done</h3></div>
+</div>
+
+<div class="add-box">
+  <input id="title" placeholder="Название задачи" style="width:100%;"/>
+  <input id="date" type="date" style="width:100%;"/>
+  <select id="column" style="width:100%;">
+    <option value="todo">Todo</option>
+    <option value="prog">In Progress</option>
+    <option value="done">Done</option>
+  </select>
+  <button onclick="addTask()">Добавить</button>
+</div>
+
+<script>
+function addTask(){
+  const t=document.getElementById("title").value.trim();
+  if(!t) return;
+
+  const d=document.getElementById("date").value;
+  const col=document.getElementById("column").value;
+
+  const div=document.createElement("div");
+  div.className="task";
+  div.innerHTML=`<div class="title">${t}</div><div class="date">${d||"Без срока"}</div>`;
+  
+  div.onclick=function(){
+    div.classList.toggle("done");
+    document.getElementById("done").appendChild(div);
+  };
+
+  document.getElementById(col).appendChild(div);
+
+  document.getElementById("title").value="";
+}
+</script>
+
+</body>
+</html>
