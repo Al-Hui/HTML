@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Boar Kanban</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
+  <!-- PWA-мета для iPhone -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Boar Kanban" />
+
+  <!-- Иконка кабана (PNG Base64, 180x180) -->
+  <link rel="apple-touch-icon" sizes="180x180"
+    href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAYAAABPpA7CAAABOklEQVR4nO3SsQ3CMBiF4Y0rSCl/BtkWxE8iESiJYfokJQwCkk7qe1NfR2+Ifjb+a4BAAAAAAAAAAAAAAAAAABA+LrQ0rnOZq76Oeac9wx8vZm9y0OvQ/b7qv0Yz4bZbFVPxnOtJt+Obfcb2jxwcqUSqUSqVSmWfE8v1O7c9iN+3PYo3n47d7F8rtZ1nh9d7GZ9pZm9n47e9vWP9q9g67uW3GXZ+M5r9rjOeOeMy7Oe8zs+Z8zmmc8556zPOedcznne85znnHM55zznnnPOec8Z6x8AAAAAAAAAAAAAAAAAAAAA4FfgzW1lWFMZ8gAAAABJRU5ErkJggg==" />
+
+  <style>
+    :root {
+      --bg: #dde3f0;
+      --bg-soft: #e7edf7;
+      --card: #f4f7ff;
+      --accent: #4b7cff;
+      --accent-soft: rgba(75, 124, 255, 0.17);
+      --danger: #f87171;
+      --text: #131827;
+      --text-muted: #7b8297;
+      --shadow-light: rgba(255, 255, 255, 0.9);
+      --shadow-dark: rgba(163, 177, 198, 0.65);
+      --radius-xxl: 26px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #f3f6ff 0, #d5dcec 45%, #cbd3e5 100%);
+      color: var(--text);
+      padding: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    @supports (padding: max(0px)) {
+      body {
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+      }
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      background: linear-gradient(145deg, #e9eef8, #d8dfef);
+      border-radius: var(--radius-xxl);
+      padding: 14px 10px 10px;
+      box-shadow:
+        12px 12px 30px rgba(163, 177, 198, 0.8),
+        -10px -10px 26px rgba(255, 255, 255, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 0 12px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .app-title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .app-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-soft);
+      box-shadow:
+        4px 4px 10px var(--shadow-dark),
+        -4px -4px 10px var(--shadow-light);
+    }
+
+    .badge-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(75, 124, 255, 0.9);
+    }
+
+    /* Доска: горизонтальный скролл для iPhone */
+    .board-wrapper {
+      margin-top: 4px;
+      padding: 8px 6px 6px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .board {
+      display: flex;
+      flex-direction: row;
+      gap: 12px;
+      min-width: min(100%, 980px);
+    }
+
+    .column {
+      flex: 0 0 290px;
+      max-width: 320px;
+      background: var(--bg-soft);
+      border-radius: var(--radius-lg);
+      padding: 10px 9px 9px;
+      box-shadow:
+        8px 8px 18px var(--shadow-dark),
+        -8px -8px 18px var(--shadow-light);
+      display: flex;
+      flex-direction: column;
+      min-height: 260px;
+    }
+
+    @media (min-width: 900px) {
+      .board {
+        justify-content: space-between;
+      }
+      .column {
+        flex: 1 1 0;
+      }
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding: 0 2px;
+    }
+
+    .column-title {
+      font-size: 13px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .column-count {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-soft);
+      box-shadow:
+        inset 2px 2px 4px rgba(163, 177, 198, 0.7),
+        inset -2px -2px 4px rgba(255, 255, 255, 0.9);
+      color: var(--text-muted);
+    }
+
+    .column-body {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px 2px 6px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .column-body::-webkit-scrollbar {
+      width: 4px;
+    }
+    .column-body::-webkit-scrollbar-thumb {
+      background: rgba(163, 177, 198, 0.9);
+      border-radius: 999px;
+    }
+
+    .column.drop-target {
+      box-shadow:
+        10px 10px 22px rgba(135, 152, 185, 0.9),
+        -10px -10px 20px rgba(255, 255, 255, 1),
+        0 0 0 2px var(--accent-soft);
+    }
+
+    /* Карточка задачи */
+    .task {
+      background: var(--card);
+      border-radius: var(--radius-md);
+      padding: 10px 11px;
+      box-shadow:
+        5px 5px 12px var(--shadow-dark),
+        -5px -5px 12px var(--shadow-light);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      touch-action: manipulation;
+      cursor: grab;
+      transform: translateZ(0);
+      transition:
+        box-shadow 0.12s ease,
+        transform 0.12s ease,
+        opacity 0.12s ease;
+    }
+
+    .task.dragging {
+      opacity: 0.75;
+      box-shadow:
+        2px 2px 6px var(--shadow-dark),
+        -2px -2px 6px var(--shadow-light);
+      cursor: grabbing;
+      transform: scale(0.98);
+    }
+
+    .task-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .task-toggle {
+      margin-top: 2px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(163, 177, 198, 0.9);
+      background: radial-gradient(circle at 30% 30%, #ffffff, #d5dde9);
+      box-shadow:
+        inset 2px 2px 4px rgba(163, 177, 198, 0.7),
+        inset -2px -2px 4px rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: var(--accent);
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .task-title-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .task-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .task-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .task-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .deadline-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 9px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      box-shadow:
+        inset 1px 1px 3px rgba(163, 177, 198, 0.7),
+        inset -1px -1px 3px rgba(255, 255, 255, 0.9);
+      white-space: nowrap;
+    }
+
+    .deadline-chip.overdue {
+      color: var(--danger);
+      box-shadow:
+        inset 1px 1px 3px rgba(248, 113, 113, 0.6),
+        inset -1px -1px 3px rgba(254, 242, 242, 1);
+    }
+
+    .deadline-chip.today {
+      color: var(--accent);
+      box-shadow:
+        inset 1px 1px 3px rgba(75, 124, 255, 0.5),
+        inset -1px -1px 3px rgba(235, 245, 255, 1);
+    }
+
+    .task-controls {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip-btn {
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 4px 8px;
+      font-size: 11px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      box-shadow:
+        3px 3px 6px var(--shadow-dark),
+        -3px -3px 6px var(--shadow-light);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .chip-btn:active {
+      box-shadow:
+        inset 2px 2px 4px var(--shadow-dark),
+        inset -2px -2px 4px var(--shadow-light);
+      transform: translateY(1px);
+    }
+
+    .task-delete {
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 3px 6px;
+      font-size: 13px;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .task-delete:active {
+      color: var(--danger);
+      transform: scale(0.95);
+    }
+
+    .task.completed .task-title {
+      text-decoration: line-through;
+      opacity: 0.65;
+    }
+
+    .task.completed {
+      opacity: 0.9;
+    }
+
+    .task.completed .task-toggle {
+      border-color: var(--accent);
+      background: radial-gradient(circle at 30% 30%, #ffffff, #d5dde9);
+      color: var(--accent);
+    }
+
+    /* Панель добавления задачи снизу */
+    .add-panel {
+      margin-top: 8px;
+      padding: 10px 12px 8px;
+      border-radius: var(--radius-lg);
+      background: var(--bg-soft);
+      box-shadow:
+        8px 8px 18px var(--shadow-dark),
+        -8px -8px 18px var(--shadow-light);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .add-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .add-main-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    @media (min-width: 720px) {
+      .add-main-row {
+        flex-direction: row;
+        align-items: center;
+      }
+    }
+
+    .add-input {
+      flex: 1 1 auto;
+      border-radius: var(--radius-md);
+      border: none;
+      padding: 9px 11px;
+      font-size: 14px;
+      background: var(--bg-soft);
+      color: var(--text);
+      box-shadow:
+        inset 3px 3px 6px rgba(163, 177, 198, 0.8),
+        inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+      outline: none;
+    }
+
+    .add-input::placeholder {
+      color: rgba(123, 130, 151, 0.9);
+    }
+
+    .add-row-secondary {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .add-date,
+    .add-time,
+    .add-select {
+      border-radius: var(--radius-md);
+      border: none;
+      padding: 7px 9px;
+      font-size: 12px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      box-shadow:
+        inset 3px 3px 6px rgba(163, 177, 198, 0.8),
+        inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+      outline: none;
+    }
+
+    .add-date,
+    .add-time {
+      flex: 0 0 120px;
+    }
+
+    .add-select {
+      flex: 0 0 130px;
+    }
+
+    .btn-primary {
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 9px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #4b7cff, #7d8dff);
+      color: #f9fbff;
+      box-shadow:
+        6px 6px 14px rgba(119, 137, 190, 0.9),
+        -3px -3px 10px rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+
+    .btn-primary:active {
+      box-shadow:
+        inset 3px 3px 6px rgba(83, 104, 165, 0.9),
+        inset -3px -3px 6px rgba(255, 255, 255, 0.9);
+      transform: translateY(1px);
+    }
+
+    .btn-ghost {
+      border-radius: var(--radius-pill);
+      border: none;
+      padding: 7px 12px;
+      font-size: 12px;
+      background: var(--bg-soft);
+      color: var(--text-muted);
+      box-shadow:
+        4px 4px 10px var(--shadow-dark),
+        -4px -4px 10px var(--shadow-light);
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .btn-ghost:active {
+      box-shadow:
+        inset 2px 2px 4px var(--shadow-dark),
+        inset -2px -2px 4px var(--shadow-light);
+      transform: translateY(1px);
+    }
+
+    .hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-block">
+        <div class="app-title">Boar Kanban</div>
+        <div class="app-subtitle">Мягкий неоморфизм · Todo · In Progress · Done</div>
+      </div>
+      <div class="badge">
+        <span class="badge-dot"></span>
+        <span>Локальное сохранение · iPhone ready</span>
+      </div>
+    </header>
+
+    <div class="board-wrapper">
+      <main class="board">
+        <!-- Todo -->
+        <section class="column" data-column="todo">
+          <div class="column-header">
+            <div class="column-title">Todo</div>
+            <div class="column-count"><span data-count="todo">0</span> задач</div>
+          </div>
+          <div class="column-body" data-list="todo"></div>
+        </section>
+
+        <!-- In Progress -->
+        <section class="column" data-column="inprogress">
+          <div class="column-header">
+            <div class="column-title">In Progress</div>
+            <div class="column-count"><span data-count="inprogress">0</span> задач</div>
+          </div>
+          <div class="column-body" data-list="inprogress"></div>
+        </section>
+
+        <!-- Done -->
+        <section class="column" data-column="done">
+          <div class="column-header">
+            <div class="column-title">Done</div>
+            <div class="column-count"><span data-count="done">0</span> задач</div>
+          </div>
+          <div class="column-body" data-list="done"></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Панель добавления задач -->
+    <section class="add-panel">
+      <div class="add-title-row">
+        <span>Новая задача</span>
+        <button class="btn-ghost" id="reset-btn">🧹 Сбросить доску</button>
+      </div>
+
+      <div class="add-main-row">
+        <input
+          type="text"
+          id="new-title"
+          class="add-input"
+          placeholder="Что нужно сделать?"
+        />
+      </div>
+
+      <div class="add-row-secondary" style="margin-top: 4px;">
+        <input type="date" id="new-date" class="add-date" />
+        <input type="time" id="new-time" class="add-time" />
+        <select id="new-column" class="add-select">
+          <option value="todo">Todo</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+        <button class="btn-primary" id="add-btn">➕ Добавить</button>
+      </div>
+
+      <div class="hint">
+        Перетаскивай карточки между колонками. Тап по кружку — выполнено (перенос в Done и зачёркивание).
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "boar-kanban-v1";
+
+    let state = {
+      todo: [],
+      inprogress: [],
+      done: [],
+    };
+
+    const lists = {
+      todo: document.querySelector('[data-list="todo"]'),
+      inprogress: document.querySelector('[data-list="inprogress"]'),
+      done: document.querySelector('[data-list="done"]'),
+    };
+
+    const counters = {
+      todo: document.querySelector('[data-count="todo"]'),
+      inprogress: document.querySelector('[data-count="inprogress"]'),
+      done: document.querySelector('[data-count="done"]'),
+    };
+
+    const columns = document.querySelectorAll(".column");
+    const addBtn = document.getElementById("add-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const newTitleInput = document.getElementById("new-title");
+    const newDateInput = document.getElementById("new-date");
+    const newTimeInput = document.getElementById("new-time");
+    const newColumnSelect = document.getElementById("new-column");
+
+    let dragData = null;
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn("Не удалось сохранить состояние:", e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        state = {
+          todo: parsed.todo || [],
+          inprogress: parsed.inprogress || [],
+          done: parsed.done || [],
+        };
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function formatDeadline(dateStr, timeStr) {
+      if (!dateStr && !timeStr) {
+        return { text: "Без срока", cls: "" };
+      }
+
+      let label = "";
+      let cls = "";
+
+      let d;
+      if (dateStr) {
+        d = new Date(dateStr + "T" + (timeStr || "00:00"));
+      } else {
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = today.getMonth();
+        const day = today.getDate();
+        d = new Date(y, m, day);
+      }
+
+      if (isNaN(d.getTime())) {
+        return { text: "Срок: " + (dateStr || "") + " " + (timeStr || ""), cls: "" };
+      }
+
+      const now = new Date();
+      const startOfToday = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        now.getDate()
+      );
+      const startOfThatDay = new Date(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate()
+      );
+
+      const diffDays = Math.floor(
+        (startOfThatDay - startOfToday) / (1000 * 60 * 60 * 24)
+      );
+
+      const timePart = timeStr ? timeStr.slice(0, 5) : "";
+
+      if (diffDays < 0 || (diffDays === 0 && d < now)) {
+        label = "Просрочено";
+        if (timePart) label += " · " + timePart;
+        cls = "overdue";
+      } else if (diffDays === 0) {
+        label = "Сегодня";
+        if (timePart) label += " · " + timePart;
+        cls = "today";
+      } else if (diffDays === 1) {
+        label = "Завтра";
+        if (timePart) label += " · " + timePart;
+      } else {
+        const dd = String(d.getDate()).padStart(2, "0");
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        label = `${dd}.${mm}`;
+        if (timePart) label += " · " + timePart;
+      }
+
+      return { text: label, cls };
+    }
+
+    function columnLabel(key) {
+      switch (key) {
+        case "todo": return "Todo";
+        case "inprogress": return "In Progress";
+        case "done": return "Done";
+        default: return key;
+      }
+    }
+
+    function createTaskElement(task, columnKey) {
+      const el = document.createElement("article");
+      el.className = "task";
+      el.draggable = true;
+      el.dataset.id = task.id;
+      el.dataset.column = columnKey;
+
+      if (task.completed) el.classList.add("completed");
+
+      const deadline = formatDeadline(task.dueDate, task.dueTime);
+
+      el.innerHTML = `
+        <div class="task-header">
+          <button class="task-toggle" type="button" aria-label="Готово">
+            ${task.completed ? "✓" : ""}
+          </button>
+          <div class="task-title-wrap">
+            <div class="task-title">${escapeHtml(task.title)}</div>
+            <div class="task-sub">${columnLabel(columnKey)}</div>
+          </div>
+        </div>
+        <div class="task-footer">
+          <div class="deadline-chip ${deadline.cls}">
+            ⏰ <span>${deadline.text}</span>
+          </div>
+          <div class="task-controls">
+            <button class="chip-btn" data-move="left">←</button>
+            <button class="chip-btn" data-move="right">→</button>
+            <button class="task-delete" title="Удалить">✕</button>
+          </div>
+        </div>
+      `;
+
+      const toggleBtn = el.querySelector(".task-toggle");
+      const deleteBtn = el.querySelector(".task-delete");
+      const leftBtn = el.querySelector('[data-move="left"]');
+      const rightBtn = el.querySelector('[data-move="right"]');
+
+      toggleBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleCompleted(task.id, columnKey);
+      });
+
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("Удалить задачу?")) {
+          removeTask(columnKey, task.id);
+        }
+      });
+
+      leftBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveTaskSide(task.id, columnKey, -1);
+      });
+
+      rightBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        moveTaskSide(task.id, columnKey, 1);
+      });
+
+      el.addEventListener("click", (e) => {
+        if (
+          e.target === toggleBtn ||
+          e.target === deleteBtn ||
+          e.target === leftBtn ||
+          e.target === rightBtn
+        ) {
+          return;
+        }
+        toggleCompleted(task.id, columnKey);
+      });
+
+      // Drag & drop
+      el.addEventListener("dragstart", (e) => {
+        dragData = { id: task.id, from: columnKey };
+        el.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+      });
+
+      el.addEventListener("dragend", () => {
+        el.classList.remove("dragging");
+        dragData = null;
+      });
+
+      return el;
+    }
+
+    function moveTaskSide(id, fromColumn, direction) {
+      const order = ["todo", "inprogress", "done"];
+      const idx = order.indexOf(fromColumn);
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= order.length) return;
+      const toColumn = order[newIdx];
+      moveTask(fromColumn, toColumn, id, false);
+    }
+
+    function renderColumn(columnKey) {
+      const list = lists[columnKey];
+      list.innerHTML = "";
+      state[columnKey].forEach((task) => {
+        const el = createTaskElement(task, columnKey);
+        list.appendChild(el);
+      });
+      counters[columnKey].textContent = state[columnKey].length;
+    }
+
+    function renderAll() {
+      renderColumn("todo");
+      renderColumn("inprogress");
+      renderColumn("done");
+    }
+
+    function addTask(title, dueDate, dueTime, columnKey) {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+
+      const task = {
+        id: uid(),
+        title: trimmed,
+        dueDate: dueDate || "",
+        dueTime: dueTime || "",
+        completed: columnKey === "done",
+      };
+
+      state[columnKey].push(task);
+      saveState();
+      renderColumn(columnKey);
+    }
+
+    function removeTask(columnKey, id) {
+      state[columnKey] = state[columnKey].filter((t) => t.id !== id);
+      saveState();
+      renderColumn(columnKey);
+    }
+
+    function moveTask(from, to, id, forceComplete) {
+      if (!state[from] || !state[to]) return;
+      const list = state[from];
+      const idx = list.findIndex((t) => t.id === id);
+      if (idx === -1) return;
+
+      const [task] = list.splice(idx, 1);
+      if (to === "done" || forceComplete) {
+        task.completed = true;
+      }
+      state[to].push(task);
+      saveState();
+      renderAll();
+    }
+
+    function toggleCompleted(id, columnKey) {
+      const list = state[columnKey];
+      const idx = list.findIndex((t) => t.id === id);
+      if (idx === -1) return;
+      const task = list[idx];
+
+      if (!task.completed) {
+        // Ставим выполнено → переносим в Done
+        moveTask(columnKey, "done", id, true);
+      } else {
+        // Снимаем выполнено: если в Done — отправим обратно в Todo
+        task.completed = false;
+        if (columnKey === "done") {
+          state.done.splice(idx, 1);
+          state.todo.push(task);
+        }
+        saveState();
+        renderAll();
+      }
+    }
+
+    // Обработка drag & drop для колонок
+    columns.forEach((col) => {
+      const body = col.querySelector(".column-body");
+      col.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        col.classList.add("drop-target");
+        e.dataTransfer.dropEffect = "move";
+      });
+
+      col.addEventListener("dragleave", (e) => {
+        if (!col.contains(e.relatedTarget)) {
+          col.classList.remove("drop-target");
+        }
+      });
+
+      col.addEventListener("drop", (e) => {
+        e.preventDefault();
+        col.classList.remove("drop-target");
+        let data;
+        try {
+          data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        } catch {
+          data = dragData;
+        }
+        if (!data || !data.id || !data.from) return;
+        const to = col.dataset.column;
+        if (!to || !state[to]) return;
+        if (data.from === to) return;
+        moveTask(data.from, to, data.id, false);
+      });
+    });
+
+    // Добавление задачи
+    addBtn.addEventListener("click", () => {
+      const title = newTitleInput.value;
+      const date = newDateInput.value;
+      const time = newTimeInput.value;
+      const col = newColumnSelect.value;
+      addTask(title, date, time, col);
+      newTitleInput.value = "";
+    });
+
+    newTitleInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addBtn.click();
+      }
+    });
+
+    // Сброс доски
+    resetBtn.addEventListener("click", () => {
+      if (!confirm("Точно очистить все задачи?")) return;
+      state = { todo: [], inprogress: [], done: [] };
+      saveState();
+      renderAll();
+    });
+
+    // Инициализация
+    (function init() {
+      const loaded = loadState();
+      if (!loaded) {
+        state.todo = [
+          {
+            id: uid(),
+            title: "Сделать Boar Kanban под iPhone",
+            dueDate: "",
+            dueTime: "",
+            completed: false,
+          },
+          {
+            id: uid(),
+            title: "Вынести иконку кабана на рабочий стол",
+            dueDate: "",
+            dueTime: "",
+            completed: false,
+          },
+        ];
+        state.inprogress = [
+          {
+            id: uid(),
+            title: "Спланировать задачи на неделю",
+            dueDate: "",
+            dueTime: "",
+            completed: false,
+          },
+        ];
+        state.done = [
+          {
+            id: uid(),
+            title: "Выбрать стиль: матовый неоморфизм",
+            dueDate: "",
+            dueTime: "",
+            completed: true,
+          },
+        ];
+        saveState();
+      }
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
