@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Мини Kanban доска</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020617;
+      --bg-soft: #020617;
+      --panel: #020617;
+      --col-bg: #020617;
+      --border-soft: rgba(148, 163, 184, 0.2);
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.18);
+      --text: #e5e7eb;
+      --text-muted: #9ca3af;
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 1100px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 55%);
+      border-radius: 26px;
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      box-shadow:
+        0 20px 60px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .app-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .app-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      align-items: center;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: rgba(15, 23, 42, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 16px 12px;
+      }
+
+      .board {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .column {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 20px;
+      padding: 10px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 180px);
+    }
+
+    .column-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 2px 4px;
+    }
+
+    .column-title {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+    }
+
+    .column-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .column-body {
+      margin-top: 6px;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(55, 65, 81, 1) transparent;
+    }
+
+    .column-body::-webkit-scrollbar {
+      width: 6px;
+    }
+    .column-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .column-body::-webkit-scrollbar-thumb {
+      background: rgba(55, 65, 81, 1);
+      border-radius: var(--radius-pill);
+    }
+
+    .column.drop-target {
+      border-color: var(--accent);
+      box-shadow:
+        0 0 0 1px rgba(37, 99, 235, 0.8),
+        0 10px 28px rgba(37, 99, 235, 0.35);
+      background: radial-gradient(circle at top, rgba(37, 99, 235, 0.18), #020617 60%);
+    }
+
+    .task {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 14px;
+      padding: 8px 9px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      font-size: 13px;
+      cursor: grab;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition:
+        transform 0.12s ease,
+        box-shadow 0.12s ease,
+        border-color 0.12s ease,
+        background 0.12s ease;
+    }
+
+    .task:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.9);
+      border-color: rgba(148, 163, 184, 0.8);
+      background: rgba(15, 23, 42, 1);
+    }
+
+    .task.dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+      box-shadow: none;
+    }
+
+    .task-title {
+      font-size: 13px;
+      font-weight: 500;
+      word-break: break-word;
+    }
+
+    .task-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .task-tag {
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.9);
+    }
+
+    .task-delete {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 2px 6px;
+      border-radius: var(--radius-pill);
+      transition:
+        background 0.1s ease,
+        color 0.1s ease;
+    }
+
+    .task-delete:hover {
+      background: rgba(248, 113, 113, 0.2);
+      color: #fecaca;
+    }
+
+    .add-form {
+      border-top: 1px dashed rgba(55, 65, 81, 0.9);
+      margin-top: 6px;
+      padding-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .add-input {
+      width: 100%;
+      padding: 7px 9px;
+      border-radius: 12px;
+      border: 1px solid rgba(31, 41, 55, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      resize: none;
+      min-height: 34px;
+      max-height: 90px;
+    }
+
+    .add-input::placeholder {
+      color: rgba(148, 163, 184, 0.8);
+    }
+
+    .add-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn {
+      border-radius: var(--radius-pill);
+      padding: 6px 11px;
+      font-size: 12px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text-muted);
+      transition:
+        background 0.12s ease,
+        color 0.12s ease,
+        box-shadow 0.12s ease,
+        border-color 0.12s ease,
+        transform 0.08s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      border-color: transparent;
+      color: #e5e7eb;
+      box-shadow:
+        0 10px 30px rgba(37, 99, 235, 0.5),
+        0 0 0 1px rgba(30, 64, 175, 0.8);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 14px 38px rgba(37, 99, 235, 0.6),
+        0 0 0 1px rgba(30, 64, 175, 1);
+    }
+
+    .btn-ghost {
+      border-color: rgba(55, 65, 81, 0.9);
+      color: var(--text-muted);
+      background: rgba(15, 23, 42, 0.96);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(31, 41, 55, 0.96);
+      border-color: rgba(75, 85, 99, 1);
+      color: #e5e7eb;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.96);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="title-block">
+        <div class="app-title">Мини Kanban</div>
+        <div class="app-subtitle">Перетаскивай задачи между колонками Todo / In&nbsp;Progress / Done</div>
+      </div>
+      <div class="meta">
+        <div class="pill">
+          <span class="dot"></span>
+          <span id="status-label">Локальное сохранение включено</span>
+        </div>
+        <button class="btn btn-ghost" id="reset-btn" title="Очистить все задачи">
+          🧹 Сбросить доску
+        </button>
+      </div>
+    </header>
+
+    <main class="board">
+      <!-- Todo -->
+      <section class="column" data-column="todo">
+        <div class="column-header">
+          <div class="column-title">Todo</div>
+          <span class="column-count"><span data-count="todo">0</span> задач</span>
+        </div>
+        <div class="column-body" data-list="todo"></div>
+
+        <form class="add-form" data-form="todo">
+          <textarea
+            class="add-input"
+            rows="2"
+            placeholder="Новая задача..."
+          ></textarea>
+          <div class="add-row">
+            <button type="submit" class="btn btn-primary">
+              ➕ Добавить
+            </button>
+            <span class="badge">
+              ⏎ Enter — быстро добавить
+            </span>
+          </div>
+        </form>
+      </section>
+
+      <!-- In Progress -->
+      <section class="column" data-column="inprogress">
+        <div class="column-header">
+          <div class="column-title">In Progress</div>
+          <span class="column-count"><span data-count="inprogress">0</span> задач</span>
+        </div>
+        <div class="column-body" data-list="inprogress"></div>
+
+        <form class="add-form" data-form="inprogress">
+          <textarea
+            class="add-input"
+            rows="2"
+            placeholder="Добавить задачу в работу..."
+          ></textarea>
+          <div class="add-row">
+            <button type="submit" class="btn btn-ghost">
+              ➕ Добавить
+            </button>
+            <span class="badge">
+              drag &amp; drop поддерживается
+            </span>
+          </div>
+        </form>
+      </section>
+
+      <!-- Done -->
+      <section class="column" data-column="done">
+        <div class="column-header">
+          <div class="column-title">Done</div>
+          <span class="column-count"><span data-count="done">0</span> задач</span>
+        </div>
+        <div class="column-body" data-list="done"></div>
+
+        <form class="add-form" data-form="done">
+          <textarea
+            class="add-input"
+            rows="2"
+            placeholder="Добавить выполненную задачу..."
+          ></textarea>
+          <div class="add-row">
+            <button type="submit" class="btn btn-ghost">
+              ➕ Добавить
+            </button>
+            <span class="badge">
+              ✔ Архив выполненного
+            </span>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // ===== Модель данных =====
+    const STORAGE_KEY = "mini-kanban-v1";
+
+    let state = {
+      todo: [],
+      inprogress: [],
+      done: [],
+    };
+
+    // ===== DOM =====
+    const columns = document.querySelectorAll(".column");
+    const lists = {
+      todo: document.querySelector('[data-list="todo"]'),
+      inprogress: document.querySelector('[data-list="inprogress"]'),
+      done: document.querySelector('[data-list="done"]'),
+    };
+    const counters = {
+      todo: document.querySelector('[data-count="todo"]'),
+      inprogress: document.querySelector('[data-count="inprogress"]'),
+      done: document.querySelector('[data-count="done"]'),
+    };
+    const forms = {
+      todo: document.querySelector('[data-form="todo"]'),
+      inprogress: document.querySelector('[data-form="inprogress"]'),
+      done: document.querySelector('[data-form="done"]'),
+    };
+    const resetBtn = document.getElementById("reset-btn");
+
+    let dragData = null; // { column, id }
+
+    // ===== Helpers =====
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn("Не удалось сохранить состояние:", e);
+      }
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return false;
+        state = {
+          todo: parsed.todo || [],
+          inprogress: parsed.inprogress || [],
+          done: parsed.done || [],
+        };
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function createTaskElement(task, columnKey) {
+      const el = document.createElement("article");
+      el.className = "task";
+      el.draggable = true;
+      el.dataset.id = task.id;
+      el.dataset.column = columnKey;
+
+      el.innerHTML = `
+        <div class="task-title">${escapeHtml(task.title)}</div>
+        <div class="task-meta">
+          <span class="task-tag">${columnLabel(columnKey)}</span>
+          <button class="task-delete" title="Удалить задачу">✕</button>
+        </div>
+      `;
+
+      // drag events
+      el.addEventListener("dragstart", (e) => {
+        dragData = { id: task.id, from: columnKey };
+        el.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+      });
+
+      el.addEventListener("dragend", () => {
+        el.classList.remove("dragging");
+        dragData = null;
+      });
+
+      // delete
+      el.querySelector(".task-delete").addEventListener("click", () => {
+        removeTask(columnKey, task.id);
+      });
+
+      return el;
+    }
+
+    function columnLabel(key) {
+      switch (key) {
+        case "todo":
+          return "Todo";
+        case "inprogress":
+          return "In Progress";
+        case "done":
+          return "Done";
+        default:
+          return key;
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function renderColumn(columnKey) {
+      const list = lists[columnKey];
+      list.innerHTML = "";
+      const items = state[columnKey];
+      items.forEach((task) => {
+        const item = createTaskElement(task, columnKey);
+        list.appendChild(item);
+      });
+      counters[columnKey].textContent = items.length;
+    }
+
+    function renderAll() {
+      renderColumn("todo");
+      renderColumn("inprogress");
+      renderColumn("done");
+    }
+
+    function addTask(columnKey, title) {
+      const trimmed = title.trim();
+      if (!trimmed) return;
+      const newTask = { id: uid(), title: trimmed };
+      state[columnKey].push(newTask);
+      saveState();
+      renderColumn(columnKey);
+    }
+
+    function removeTask(columnKey, id) {
+      state[columnKey] = state[columnKey].filter((t) => t.id !== id);
+      saveState();
+      renderColumn(columnKey);
+    }
+
+    function moveTask(from, to, id) {
+      if (!state[from]) return;
+      const idx = state[from].findIndex((t) => t.id === id);
+      if (idx === -1) return;
+      const [task] = state[from].splice(idx, 1);
+      state[to].push(task);
+      saveState();
+      renderAll();
+    }
+
+    // ===== Обработка форм добавления =====
+    Object.entries(forms).forEach(([columnKey, form]) => {
+      const textarea = form.querySelector(".add-input");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        addTask(columnKey, textarea.value);
+        textarea.value = "";
+      });
+
+      textarea.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          addTask(columnKey, textarea.value);
+          textarea.value = "";
+        }
+      });
+    });
+
+    // ===== Drag & Drop колонок =====
+    columns.forEach((col) => {
+      col.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        col.classList.add("drop-target");
+      });
+
+      col.addEventListener("dragleave", (e) => {
+        if (!col.contains(e.relatedTarget)) {
+          col.classList.remove("drop-target");
+        }
+      });
+
+      col.addEventListener("drop", (e) => {
+        e.preventDefault();
+        col.classList.remove("drop-target");
+        let data;
+        try {
+          data = JSON.parse(e.dataTransfer.getData("text/plain"));
+        } catch {
+          data = dragData;
+        }
+        if (!data || !data.id || !data.from) return;
+        const to = col.dataset.column;
+        if (!to || !state[to]) return;
+        if (data.from === to) return;
+        moveTask(data.from, to, data.id);
+      });
+    });
+
+    // ===== Сброс доски =====
+    resetBtn.addEventListener("click", () => {
+      if (!confirm("Точно очистить все задачи на доске?")) return;
+      state = { todo: [], inprogress: [], done: [] };
+      saveState();
+      renderAll();
+    });
+
+    // ===== Инициализация =====
+    (function init() {
+      const loaded = loadState();
+
+      if (!loaded) {
+        // демо-данные
+        state.todo = [
+          { id: uid(), title: "Сделать мини-Kanban доску" },
+          { id: uid(), title: "Продумать структуру задач" },
+        ];
+        state.inprogress = [
+          { id: uid(), title: "Верстка UI и drag & drop" },
+        ];
+        state.done = [{ id: uid(), title: "Выбрать идею проекта" }];
+        saveState();
+      }
+
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
