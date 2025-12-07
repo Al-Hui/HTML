@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AI Running Coach</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: #f3f4f6; 
+            /* Поддержка "челки" айфона */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .tab-content { display: none; opacity: 0; transition: opacity 0.2s; }
+        .tab-content.active { display: block; opacity: 1; }
+        .nav-item.active { color: #2563eb; transform: scale(1.05); }
+        .nav-item { transition: all 0.2s; }
+        
+        /* Анимация точек при наборе текста */
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-gray-50">
+
+    <header class="bg-white shadow-sm px-4 py-3 text-center z-10 flex justify-between items-center shrink-0">
+        <div class="w-6"></div> <h1 class="text-lg font-bold text-gray-800 tracking-tight">🏃‍♂️ AI Coach</h1>
+        <div class="w-6 text-xs text-gray-400" id="status-indicator">●</div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto no-scrollbar p-4 pb-28 relative w-full max-w-md mx-auto" id="main-container">
+        
+        <div id="tab-chat" class="tab-content active h-full flex flex-col">
+            <div id="chat-messages" class="flex-1 space-y-4 mb-2">
+                <div class="flex items-start">
+                    <div class="bg-white text-gray-800 p-3 rounded-2xl rounded-tl-none border border-gray-100 shadow-sm max-w-[85%] text-sm">
+                        Привет! Я твой тренер на базе DeepSeek. Готов разобрать твою технику или проанализировать данные. Введи свой API ключ в настройках, и погнали! 🚀
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-log" class="tab-content space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm">
+                <h2 class="font-bold mb-4 text-gray-800 text-lg">Записать тренировку</h2>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-500 ml-1">Дата</label>
+                            <input type="date" id="run-date" class="bg-gray-50 border-0 text-gray-800 p-3 rounded-xl w-full focus:ring-2 ring-blue-500 outline-none">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-500 ml-1">Дистанция (км)</label>
+                            <input type="number" id="run-dist" placeholder="0.0" step="0.1" class="bg-gray-50 border-0 text-gray-800 p-3 rounded-xl w-full focus:ring-2 ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-500 ml-1">Время</label>
+                            <input type="text" id="run-time" placeholder="мм:сс" class="bg-gray-50 border-0 text-gray-800 p-3 rounded-xl w-full focus:ring-2 ring-blue-500 outline-none">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="text-xs text-gray-500 ml-1">Пульс</label>
+                            <input type="number" id="run-hr" placeholder="уд/мин" class="bg-gray-50 border-0 text-gray-800 p-3 rounded-xl w-full focus:ring-2 ring-blue-500 outline-none">
+                        </div>
+                    </div>
+                    <button onclick="saveRun()" class="w-full bg-blue-600 active:bg-blue-700 text-white py-3.5 rounded-xl font-bold text-sm shadow-md shadow-blue-200 transition-all mt-2">
+                        Добавить запись
+                    </button>
+                </div>
+            </div>
+
+            <h3 class="font-bold text-gray-400 text-xs uppercase ml-1">История</h3>
+            <div id="run-history" class="space-y-2 pb-4">
+                </div>
+        </div>
+
+        <div id="tab-stats" class="tab-content space-y-4">
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-white p-4 rounded-2xl shadow-sm">
+                    <h3 class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Всего пробежал</h3>
+                    <p class="text-2xl font-black text-gray-800 mt-1"><span id="total-km">0</span> <span class="text-sm font-normal text-gray-500">км</span></p>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm">
+                    <h3 class="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Тренировок</h3>
+                    <p class="text-2xl font-black text-gray-800 mt-1" id="total-runs">0</p>
+                </div>
+            </div>
+            
+            <div class="bg-white p-4 rounded-2xl shadow-sm h-64">
+                <canvas id="distanceChart"></canvas>
+            </div>
+
+            <button onclick="askCoachAboutStats()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-4 rounded-xl font-bold shadow-lg shadow-emerald-100 flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                <i class="fas fa-magic"></i> Анализ прогресса (AI)
+            </button>
+        </div>
+
+        <div id="tab-settings" class="tab-content space-y-4">
+            <div class="bg-white p-5 rounded-2xl shadow-sm">
+                <h2 class="font-bold mb-2 text-gray-800">Настройки DeepSeek</h2>
+                <p class="text-xs text-gray-500 mb-3 leading-relaxed">
+                    Ключ API нужен для общения с тренером. Получите его на platform.deepseek.com.
+                    Ключ хранится <strong>только</strong> на этом устройстве.
+                </p>
+                <input type="password" id="api-key" placeholder="sk-..." class="bg-gray-50 border border-gray-200 text-gray-800 p-3 rounded-xl w-full focus:border-blue-500 outline-none mb-4 transition-colors">
+                
+                <button onclick="saveApiKey()" class="w-full bg-gray-900 text-white py-3 rounded-xl font-medium text-sm">
+                    Сохранить ключ
+                </button>
+            </div>
+            
+            <div class="px-4">
+                <button onclick="clearData()" class="text-red-500 text-xs w-full text-center py-4">
+                    Сбросить все данные
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="input-area" class="fixed bottom-[80px] left-0 right-0 px-3 z-20 max-w-md mx-auto hidden">
+        <div class="bg-white/90 backdrop-blur-md p-2 rounded-[2rem] shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-gray-100 flex gap-2 items-center pl-4 pr-2">
+            <input type="text" id="user-input" placeholder="Спроси тренера..." class="flex-1 bg-transparent text-gray-800 placeholder-gray-400 focus:outline-none py-3 text-base">
+            <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-colors shrink-0">
+                <i class="fas fa-arrow-up text-sm"></i>
+            </button>
+        </div>
+    </div>
+
+    <nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 pb-safe pt-1 px-2 h-[80px] flex justify-around items-start z-30">
+        <button onclick="switchTab('chat')" class="nav-item active w-16 py-2 flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-comment-dots text-xl"></i>
+            <span class="text-[10px] font-medium">Чат</span>
+        </button>
+        <button onclick="switchTab('log')" class="nav-item w-16 py-2 flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-clipboard-list text-xl"></i>
+            <span class="text-[10px] font-medium">Дневник</span>
+        </button>
+        <button onclick="switchTab('stats')" class="nav-item w-16 py-2 flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-chart-pie text-xl"></i>
+            <span class="text-[10px] font-medium">Инфо</span>
+        </button>
+        <button onclick="switchTab('settings')" class="nav-item w-16 py-2 flex flex-col items-center gap-1 text-gray-400">
+            <i class="fas fa-sliders-h text-xl"></i>
+            <span class="text-[10px] font-medium">Ключ</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- КОНФИГУРАЦИЯ ---
+        // ИСПОЛЬЗУЕМ ПРОКСИ ДЛЯ ОБХОДА БЛОКИРОВКИ CORS
+        const PROXY = 'https://corsproxy.io/?'; 
+        const API_ENDPOINT = 'https://api.deepseek.com/chat/completions';
+        
+        let apiKey = localStorage.getItem('deepseek_key') || '';
+        let runs = JSON.parse(localStorage.getItem('run_history')) || [];
+        // Стартовый промпт
+        const SYSTEM_PROMPT = "Ты профессиональный тренер по бегу. Ты кратко, но емко отвечаешь на вопросы любителей. Ты анализируешь их данные. Твой тон: позитивный, мотивирующий. Используй эмодзи.";
+        
+        let messages = JSON.parse(localStorage.getItem('chat_history')) || [
+            {role: "system", content: SYSTEM_PROMPT}
+        ];
+
+        // --- ИНИЦИАЛИЗАЦИЯ ---
+        document.getElementById('api-key').value = apiKey;
+        document.getElementById('run-date').valueAsDate = new Date();
+        renderRuns();
+        if(messages.length > 1) renderMessages(true);
+        switchTab('chat');
+        updateStatus();
+
+        // --- ФУНКЦИИ ИНТЕРФЕЙСА ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            // Найти кнопку, которая вызвала функцию, или подсветить по ID
+            // Упрощение: перерисовка классов по индексу или просто хардкод логики выше не нужен, если кликаем
+            const btn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+            if(btn) btn.classList.add('active');
+
+            const inputArea = document.getElementById('input-area');
+            if(tabId === 'chat') {
+                inputArea.classList.remove('hidden');
+                setTimeout(scrollToBottom, 100);
+            } else {
+                inputArea.classList.add('hidden');
+                if(tabId === 'stats') renderChart();
+            }
+        }
+
+        function updateStatus() {
+            const ind = document.getElementById('status-indicator');
+            ind.style.color = apiKey ? '#10b981' : '#ef4444'; // Зеленый если есть ключ, красный если нет
+        }
+
+        // --- ЧАТ (С ИСПРАВЛЕННЫМ API ЗАПРОСОМ) ---
+        function renderMessages(isHistory = false) {
+            const container = document.getElementById('chat-messages');
+            if(!isHistory) container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                if(msg.role === 'system') return;
+                appendMessageUI(msg.role, msg.content, false);
+            });
+            scrollToBottom();
+        }
+
+        function appendMessageUI(role, text, animate = true) {
+            const container = document.getElementById('chat-messages');
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${role === 'user' ? 'justify-end' : 'items-start'} animate-fade-in`;
+            
+            const bubble = document.createElement('div');
+            const baseClass = "p-3.5 px-4 rounded-2xl text-[15px] shadow-sm max-w-[85%] leading-relaxed ";
+            
+            if (role === 'user') {
+                bubble.className = baseClass + "bg-blue-600 text-white rounded-br-sm";
+            } else if (role === 'error') {
+                bubble.className = baseClass + "bg-red-50 text-red-800 border border-red-200 rounded-bl-sm";
+            } else {
+                bubble.className = baseClass + "bg-white text-gray-800 border border-gray-100 rounded-bl-sm";
+            }
+            
+            // Markdown-style simple formatting
+            let formattedText = text.replace(/\n/g, '<br>');
+            formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>'); // Bold support
+            
+            bubble.innerHTML = formattedText;
+            wrapper.appendChild(bubble);
+            container.appendChild(wrapper);
+            
+            if(animate) scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const main = document.getElementById('main-container');
+            main.scrollTo({ top: main.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function sendMessage() {
+            if (!apiKey) { 
+                alert('🔑 Сначала введите API Key в настройках!'); 
+                switchTab('settings'); 
+                return; 
+            }
+            
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 1. Показываем сообщение пользователя
+            appendMessageUI('user', text);
+            input.value = '';
+            messages.push({role: "user", content: text});
+
+            // 2. Показываем анимацию загрузки
+            const loadingId = 'loading-' + Date.now();
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = loadingId;
+            loadingDiv.className = 'flex items-start';
+            loadingDiv.innerHTML = `<div class="bg-white p-4 rounded-2xl rounded-bl-sm border border-gray-100 shadow-sm flex gap-1.5"><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div><div class="w-2 h-2 bg-gray-400 rounded-full typing-dot"></div></div>`;
+            document.getElementById('chat-messages').appendChild(loadingDiv);
+            scrollToBottom();
+
+            // 3. ОТПРАВКА ЗАПРОСА (ЧЕРЕЗ ПРОКСИ)
+            try {
+                // Кодируем URL DeepSeek для прокси
+                const targetUrl = encodeURIComponent(API_ENDPOINT);
+                const finalUrl = PROXY + targetUrl;
+
+                const response = await fetch(finalUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        // Важные заголовки для прокси, иногда требуются
+                        'x-requested-with': 'XMLHttpRequest' 
+                    },
+                    body: JSON.stringify({
+                        model: "deepseek-chat", // V3
+                        messages: messages,
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+
+                document.getElementById(loadingId).remove();
+
+                const data = await response.json();
+
+                // Обработка ошибок API (например, неверный ключ или баланс)
+                if (data.error) {
+                    throw new Error(`Ошибка API (${data.error.code}): ${data.error.message}`);
+                }
+
+                if (!data.choices || data.choices.length === 0) {
+                    throw new Error('Пришел пустой ответ от сервера.');
+                }
+
+                const aiText = data.choices[0].message.content;
+                appendMessageUI('assistant', aiText);
+                messages.push({role: "assistant", content: aiText});
+                localStorage.setItem('chat_history', JSON.stringify(messages));
+
+            } catch (error) {
+                if(document.getElementById(loadingId)) document.getElementById(loadingId).remove();
+                
+                console.error(error);
+                const errorMsg = `⚠️ <strong>Не удалось получить ответ:</strong><br>${error.message}<br><br>Проверьте баланс и правильность ключа.`;
+                appendMessageUI('error', errorMsg);
+            }
+        }
+
+        // --- ДНЕВНИК И АНАЛИТИКА ---
+        function saveRun() {
+            const date = document.getElementById('run-date').value;
+            const dist = parseFloat(document.getElementById('run-dist').value);
+            const time = document.getElementById('run-time').value;
+            const hr = document.getElementById('run-hr').value;
+            
+            if(!date || !dist) { alert('Укажите хотя бы дату и километраж'); return; }
+
+            const newRun = { id: Date.now(), date, dist, time, hr };
+            runs.unshift(newRun); 
+            localStorage.setItem('run_history', JSON.stringify(runs));
+            
+            // Сброс полей
+            document.getElementById('run-dist').value = '';
+            document.getElementById('run-time').value = '';
+            document.getElementById('run-hr').value = '';
+            
+            renderRuns();
+            switchTab('log'); // Перейти к списку
+        }
+
+        function renderRuns() {
+            const container = document.getElementById('run-history');
+            container.innerHTML = '';
+            let total = 0;
+
+            if(runs.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-10 text-sm">Пока нет записей. Добавь первую пробежку!</div>';
+            }
+
+            runs.forEach(run => {
+                total += run.dist;
+                const div = document.createElement('div');
+                div.className = 'bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100';
+                
+                // Форматирование даты
+                const d = new Date(run.date);
+                const dateStr = d.toLocaleDateString('ru-RU', {day:'numeric', month:'long'});
+                
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center">
+                            <i class="fas fa-running"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${dateStr}</div>
+                            <div class="text-xs text-gray-400 flex gap-2">
+                                ${run.time ? `<span>⏱ ${run.time}</span>` : ''}
+                                ${run.hr ? `<span>❤️ ${run.hr}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-lg font-black text-gray-800">${run.dist}<span class="text-xs font-normal text-gray-400 ml-1">км</span></div>
+                `;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('total-km').innerText = total.toFixed(1);
+            document.getElementById('total-runs').innerText = runs.length;
+        }
+
+        // --- ГРАФИКИ ---
+        let chartInstance = null;
+
+        function renderChart() {
+            const ctx = document.getElementById('distanceChart').getContext('2d');
+            
+            // Берем последние 7 пробежек и сортируем по дате (по возрастанию)
+            const sortedRuns = [...runs].sort((a,b) => new Date(a.date) - new Date(b.date)).slice(-7);
+            
+            const labels = sortedRuns.map(r => {
+                const d = new Date(r.date);
+                return `${d.getDate()}.${d.getMonth()+1}`;
+            });
+            const data = sortedRuns.map(r => r.dist);
+
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Км',
+                        data: data,
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6,
+                        barThickness: 20
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f3f4f6' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function askCoachAboutStats() {
+            switchTab('chat');
+            const total = document.getElementById('total-km').innerText;
+            const recent = runs.slice(0, 5).map(r => `${r.date}: ${r.dist}км (темп/время: ${r.time || '-'})`).join('; ');
+            
+            const prompt = `Проанализируй мои беговые данные. Всего я пробежал ${total} км. Вот мои последние записи: [${recent}]. Оцени нагрузку и дай совет на следующую неделю.`;
+            
+            // Вставляем текст, но не отправляем сразу, чтобы юзер мог поправить
+            document.getElementById('user-input').value = prompt;
+            // Или можно сразу отправлять:
+            // sendMessage(); 
+        }
+
+        // --- НАСТРОЙКИ ---
+        function saveApiKey() {
+            const key = document.getElementById('api-key').value.trim();
+            if(key) {
+                localStorage.setItem('deepseek_key', key);
+                apiKey = key;
+                alert('✅ Ключ сохранен! Можно общаться.');
+                updateStatus();
+                switchTab('chat');
+            }
+        }
+
+        function clearData() {
+            if(confirm('Точно удалить все пробежки и переписку?')) {
+                localStorage.removeItem('run_history');
+                localStorage.removeItem('chat_history');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
